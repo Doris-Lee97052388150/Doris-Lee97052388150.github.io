@@ -1,0 +1,729 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>行测真题模拟考场（离线版）</title>
+<style>
+:root{
+  --bg:#eef1f6; --panel:#fff; --ink:#1b2431; --sub:#667085; --line:#e2e6ef;
+  --brand:#1f6feb; --brand-soft:#e8f0fe; --ok:#12925a; --ok-soft:#e6f6ee;
+  --bad:#d2372e; --bad-soft:#fdecea; --warn:#b45309; --warn-soft:#fef3c7;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink); padding-bottom:80px;
+  font:15px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+  -webkit-text-size-adjust:100%;
+}
+img{max-width:100%;height:auto;vertical-align:middle}
+button{font:inherit;cursor:pointer}
+h1,h2,h3{margin:0;font-weight:700}
+
+/* ---------- top bar ---------- */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);box-shadow:0 1px 3px rgba(16,24,40,.05)}
+.topbar .inner{max-width:1240px;margin:0 auto;padding:10px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:16px;letter-spacing:.3px;white-space:nowrap}
+.brand small{display:block;font-weight:500;font-size:11px;color:var(--sub);letter-spacing:0}
+.spacer{flex:1}
+.selbox{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--sub)}
+select,input[type=number]{font:inherit;font-size:13px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
+input[type=number]{width:74px}
+
+.timer{display:flex;align-items:center;gap:9px;padding:6px 14px;border-radius:12px;background:#101828;color:#fff;font-variant-numeric:tabular-nums;box-shadow:var(--shadow)}
+.timer .clock{font-size:24px;font-weight:800;letter-spacing:1px;line-height:1}
+.timer .lab{font-size:10px;opacity:.7;letter-spacing:.5px}
+.timer.warn{background:#b42318;animation:pulse 1.4s infinite}
+.timer.half{background:#b45309}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.72}}
+
+.progress{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--sub);white-space:nowrap}
+.progress b{color:var(--ink);font-variant-numeric:tabular-nums}
+.btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--ink);transition:.15s}
+.btn:hover{border-color:#c7cedb;background:#f7f9fc}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:#1a5ed6}
+.btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1240px;margin:0 auto;padding:18px;display:grid;grid-template-columns:1fr 244px;gap:18px;align-items:start}
+@media(max-width:1020px){.wrap{grid-template-columns:1fr}}
+
+.paper-head{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.paper-head h1{font-size:19px}
+.paper-head .meta{margin-top:6px;font-size:12.5px;color:var(--sub);display:flex;gap:14px;flex-wrap:wrap}
+.tips{margin-top:10px;font-size:12.5px;color:var(--sub);background:#f8fafc;border:1px dashed var(--line);border-radius:10px;padding:9px 12px;line-height:1.65}
+
+/* ---------- question cards ---------- */
+.section-head{margin:26px 0 12px;padding:10px 16px;border-radius:12px;background:linear-gradient(90deg,#1f2937,#334155);color:#fff;display:flex;align-items:center;gap:12px}
+.section-head h2{font-size:15.5px}
+.section-head .n{font-size:12px;opacity:.8;margin-left:auto;font-variant-numeric:tabular-nums}
+
+.material{background:#fffbeb;border:1px solid #f4e2b8;border-radius:12px;padding:14px 18px;margin:0 0 12px;font-size:14.5px;line-height:1.85}
+.material .mtitle{font-weight:700;font-size:12.5px;color:#9a6b00;letter-spacing:.5px;margin-bottom:6px}
+.material p{margin:.5em 0}
+.material img{display:block;margin:10px auto;border-radius:6px}
+
+.q{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px;box-shadow:var(--shadow);scroll-margin-top:96px}
+.q.correct{border-color:#a7e0c4;background:linear-gradient(0deg,#f6fdfa,#fff)}
+.q.wrong{border-color:#f0b4ae;background:linear-gradient(0deg,#fff8f7,#fff)}
+.q .qhead{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}
+.q .num{font-weight:800;font-size:15px;background:var(--brand-soft);color:var(--brand);border-radius:7px;padding:1px 9px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.q .tag{font-size:11.5px;color:var(--sub);background:#f2f4f8;border-radius:20px;padding:1px 9px}
+.q .flag{margin-left:auto;font-size:12px;font-weight:700}
+.q .flag.ok{color:var(--ok)}
+.q .flag.no{color:var(--bad)}
+.stem{font-size:15px;line-height:1.95;margin:2px 0 12px;word-break:break-word}
+.stem p{margin:.45em 0}
+.stem img{display:block;margin:10px auto;border-radius:6px}
+
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;gap:11px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:9px 13px;background:#fcfdff;cursor:pointer;transition:.13s;line-height:1.7}
+.opt:hover{border-color:#b9c6dd;background:#f6f9ff}
+.opt input{margin:6px 0 0;accent-color:var(--brand);width:16px;height:16px;flex:none}
+.opt .k{font-weight:700;min-width:16px}
+.opt .v{flex:1;word-break:break-word}
+.opt .v img{max-height:150px}
+.opt.on{border-color:var(--brand);background:var(--brand-soft)}
+.opt.ans-ok{border-color:var(--ok);background:var(--ok-soft)}
+.opt.ans-bad{border-color:var(--bad);background:var(--bad-soft)}
+.opt .mk{margin-left:auto;font-size:12px;font-weight:700;white-space:nowrap}
+.opt .mk.ok{color:var(--ok)}
+.opt .mk.no{color:var(--bad)}
+.locked .opt{cursor:default}
+.locked .opt:hover{border-color:var(--line);background:#fcfdff}
+.locked .opt.on:hover{border-color:var(--brand);background:var(--brand-soft)}
+.locked .opt.ans-ok:hover{border-color:var(--ok);background:var(--ok-soft)}
+.locked .opt.ans-bad:hover{border-color:var(--bad);background:var(--bad-soft)}
+
+.expl{margin-top:12px;border-top:1px dashed var(--line);padding-top:11px;font-size:13.8px;line-height:1.85;color:#334155}
+.expl .eh{font-weight:700;font-size:12.5px;color:var(--brand);margin-bottom:5px;letter-spacing:.4px}
+.expl p{margin:.4em 0}
+.expl img{display:inline-block;height:1.35em;margin:0 2px;vertical-align:-.25em}
+.expl img[src^="data:image/png"]{height:auto;max-height:260px;display:block;margin:8px auto}
+.ansline{font-weight:700;color:var(--ok);margin-bottom:6px}
+
+/* ---------- side nav ---------- */
+.side{position:sticky;top:78px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow);max-height:calc(100vh - 100px);overflow:auto}
+.side h3{font-size:13px;color:var(--sub);letter-spacing:.5px;margin-bottom:9px;font-weight:700}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(32px,1fr));gap:6px}
+.cell{height:30px;border:1px solid var(--line);border-radius:7px;background:#fff;font-size:12px;font-weight:600;color:#475467;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums;transition:.12s}
+.cell:hover{border-color:var(--brand);color:var(--brand)}
+.cell.done{background:#dbe7fb;border-color:#b9cdf1;color:#1a4fa0}
+.cell.ok{background:var(--ok-soft);border-color:#7fcfa8;color:var(--ok)}
+.cell.no{background:var(--bad-soft);border-color:#eda9a3;color:var(--bad)}
+.cell.mid{background:#fee2e2;border-color:#f3b0aa;color:#b42318}
+.legend{margin-top:11px;font-size:11.5px;color:var(--sub);display:flex;flex-wrap:wrap;gap:9px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px;border:1px solid var(--line)}
+
+/* ---------- bottom bar ---------- */
+.bottombar{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-top:1px solid var(--line);box-shadow:0 -2px 12px rgba(16,24,40,.06)}
+.bottombar .inner{max-width:1240px;margin:0 auto;padding:9px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.bottombar .stat{font-size:13px;color:var(--sub)}
+.bottombar .stat b{color:var(--ink);font-variant-numeric:tabular-nums}
+.bar{height:7px;border-radius:99px;background:#e6eaf2;flex:1;min-width:120px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#1f6feb,#4f9bff);width:0;transition:width .2s}
+
+/* ---------- result ---------- */
+.result{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:var(--shadow);margin-bottom:18px}
+.score-row{display:flex;gap:26px;align-items:center;flex-wrap:wrap}
+.dial{--p:0;width:150px;height:150px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:conic-gradient(var(--brand) calc(var(--p)*1%),#e8ecf4 0);position:relative}
+.dial::after{content:"";position:absolute;inset:11px;border-radius:50%;background:#fff}
+.dial .v{position:relative;text-align:center;line-height:1.15}
+.dial .v b{font-size:36px;font-variant-numeric:tabular-nums}
+.dial .v span{display:block;font-size:12px;color:var(--sub)}
+.score-facts{flex:1;min-width:260px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.fact{background:#f8fafc;border:1px solid var(--line);border-radius:11px;padding:10px 13px}
+.fact span{font-size:11.5px;color:var(--sub);display:block}
+.fact b{font-size:19px;font-variant-numeric:tabular-nums}
+.verdict{margin-top:14px;padding:12px 15px;border-radius:11px;background:var(--brand-soft);border:1px solid #c9dcfb;font-size:14px;line-height:1.75}
+table.mods{width:100%;border-collapse:collapse;margin-top:16px;font-size:13.5px}
+table.mods th,table.mods td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:right}
+table.mods th:first-child,table.mods td:first-child{text-align:left}
+table.mods thead th{background:#f8fafc;font-size:12.5px;color:var(--sub);font-weight:700}
+table.mods tbody tr:hover{background:#fafbfe}
+.pill{display:inline-block;padding:1px 8px;border-radius:20px;font-size:12px;font-weight:700}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.mid{background:var(--warn-soft);color:var(--warn)}
+.pill.no{background:var(--bad-soft);color:var(--bad)}
+.modchart{margin-top:4px}
+.mrow{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13px}
+.mlab{width:104px;flex:none;color:#344054;text-align:right}
+.mtrack{flex:1;height:12px;border-radius:99px;background:#eef1f6;overflow:hidden}
+.mfill{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#12925a,#3fbf85)}
+.mval{width:86px;flex:none;color:#667085;font-variant-numeric:tabular-nums}
+@media(max-width:560px){.mlab{width:74px;font-size:12px}.mval{width:70px;font-size:12px}}
+
+/* ---------- modal ---------- */
+.mask{position:fixed;inset:0;background:rgba(16,24,40,.45);display:none;place-items:center;z-index:99;padding:20px}
+.mask.on{display:grid}
+.dialog{background:#fff;border-radius:16px;max-width:520px;width:100%;padding:24px;box-shadow:0 20px 60px rgba(16,24,40,.3);max-height:88vh;overflow:auto}
+.dialog h3{font-size:18px;margin-bottom:6px}
+.dialog p{color:var(--sub);font-size:13.5px;line-height:1.8;margin:.5em 0}
+.dialog .rows{margin:14px 0;display:flex;flex-direction:column;gap:10px}
+.dialog .row{display:flex;align-items:center;gap:10px;font-size:14px}
+.dialog .row label{color:var(--sub);min-width:78px}
+.actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:26px;background:#101828;color:#fff;padding:11px 20px;border-radius:11px;font-size:14px;z-index:200;opacity:0;transition:.25s;pointer-events:none;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.toast.on{opacity:1;bottom:36px}
+.hidden{display:none!important}
+.imgmiss{display:inline-block;padding:2px 9px;border:1px dashed #d0a24a;background:#fdf6e3;border-radius:6px;font-size:12px;color:#8a6414}
+.cell.multi{background:#f3ecff;border-color:#c9b6f0;color:#6b3fd4}
+.tag.warn{background:#fdf1d6;color:#8a6414}
+.note{margin:10px 0 12px;padding:8px 12px;border-radius:9px;background:#fdf6e3;border:1px dashed #e5c67f;font-size:12.5px;color:#7a5a10}
+.note.src{background:#eef4ff;border-color:#c3d5f5;color:#2b4a7d}
+.missnote{margin:6px 0;padding:8px 12px;border-radius:9px;background:#fdf6e3;border:1px dashed #e5c67f;font-size:12.5px;color:#7a5a10}
+@media print{.topbar,.side,.bottombar,.mask{display:none!important}.wrap{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="inner">
+    <div class="brand">2025年内蒙古公务员录用考试《行测》题（网友回忆版）<small>离线版 · 真题来源于公开题库整理</small></div>
+    <div class="spacer"></div>
+    <div class="selbox" id="paperPick"></div>
+    <div class="timer" id="timerBox">
+      <div>
+        <div class="lab">剩余时间</div>
+        <div class="clock" id="clock">--:--</div>
+      </div>
+      <button class="btn" id="pauseBtn" style="background:#2a3444;border-color:#3b4759;color:#fff;padding:5px 10px">暂停</button>
+    </div>
+    <button class="btn primary" id="submitBtn">交卷并评分</button>
+    <button class="btn" id="settingsBtn">设置</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <main id="main"></main>
+  <aside class="side" id="side">
+    <h3>答题卡</h3>
+    <div class="grid" id="card"></div>
+    <div class="legend">
+      <span><i style="background:#fff"></i>未答</span>
+      <span><i style="background:#dbe7fb"></i>已答</span>
+      <span><i style="background:#e6f6ee;border-color:#7fcfa8"></i>正确</span>
+      <span><i style="background:#f3ecff;border-color:#c9b6f0"></i>漏选</span>
+      <span><i style="background:#fdecea;border-color:#eda9a3"></i>错误</span>
+    </div>
+    <h3 style="margin-top:16px">作答进度</h3>
+    <div id="modProgress" style="font-size:12.5px;color:#475467;line-height:1.9"></div>
+  </aside>
+</div>
+
+<div class="bottombar">
+  <div class="inner">
+    <div class="stat">已答 <b id="doneN">0</b> / <b id="allN">0</b></div>
+    <div class="bar"><i id="barFill"></i></div>
+    <div class="stat" id="scoreLive"></div>
+    <button class="btn" id="cardBtn">答题卡</button>
+    <button class="btn" id="retryBtn">重做本卷</button>
+  </div>
+</div>
+
+<div class="mask" id="mask">
+  <div class="dialog" id="dialog"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+window.__EXAM__={imgBase:"../../img/"};window.__EXAM__={generated:"",papers:[{"slug":"2025-内蒙古","title":"2025年内蒙古公务员录用考试《行测》题（网友回忆版）","year":"2025","group":"内蒙古","modules":[{"label":"政治理论","items":[{"type":"question","qid":"13504565","cat":"新思想","stem":"习近平总书记治国理政新理念新思想新论断是指引新时代中国特色社会主义伟大事业的根本遵循和行动指南。习近平总书记关于治国理政的下列重要用语，与所指工作对应正确的是：\n①历史正反两方面的经验表明，“两个结合”是我们取得成功的最大法宝——经济工作\n②进行自我革命也要注重依靠人民，靠人民群众支持和帮助解决自身问题——党建工作\n③要学习运用浙江“千万工程”经验，聚焦小切口，锲而不舍、久久为功——“三农”工作\n④要坚决维护社会稳定，坚持和发展新时代“枫桥经验”，正确处理人民内部矛盾，维护群众合法权益——社会保障工作","options":{"A":"①②","B":"③④","C":"①④","D":"②③"},"answer":"D","explanation":"本题考查理论与政策。\n①错误，“两个结合”即把马克思主义基本原理同中国具体实际相结合、同中华优秀传统文化相结合，这是党在理论创新和实践发展中取得成功的关键，是关乎党和国家事业发展全局的重大战略，并非专门指向经济工作。\n②正确，勇于自我革命是我们党最鲜明的品格和最大优势，进行自我革命也要注重依靠人民，靠人民群众支持和帮助解决自身问题，这是党在加强自身建设过程中的重要理念和实践要求，属于党建工作范畴。\n③正确，2024年12月17日至18日，中央农村工作会议在北京召开。会议传达学习了习近平重要指示，强调要聚焦学习运用“千万工程”经验、推进乡村全面振兴，集中力量抓好办成一批重点实事，千方百计推动农业增效益、农村增活力、农民增收入。强调要加强党对“三农”工作的全面领导，推动学习运用“千万工程”经验走深走实，健全推进乡村全面振兴长效机制。\n④错误，新时代“枫桥经验”最突出的特点就是牢牢抓住基层基础，最大限度把矛盾风险防范化解在基层。因此坚持和发展新时代“枫桥经验”，坚决维护社会稳定，正确处理人民内部矛盾，维护群众合法权益，主要涉及的是社会治理工作，而非单纯的社会保障工作。\n故②③表述正确。\n故正确答案为D。","no":1,"missingImage":false},{"type":"question","qid":"13504637","cat":"时事政治","stem":"习近平总书记在2024年中央经济工作会议上总结我们党对经济工作的规律性认识，提出五个“必须统筹”，为以高质量发展全面推进中国式现代化提供了科学指引。关于五个“必须统筹”，下列说法正确的有：\n①必须统筹好有效市场和有为政府的关系，这是形成既“放得活”又“管得住”的经济秩序的关键所在\n②必须统筹好总供给和总需求的关系，这是畅通国民经济循环的重要基础\n③必须统筹好培育新动能和更新旧动能的关系，这是因地制宜发展新质生产力的内在要求\n④必须统筹好做优增量和盘活存量的关系，这是全面提高资源配置效率的必由之路\n⑤必须统筹好提升质量和做大总量的关系，这是夯实中国式现代化的物质基础的必然要求","options":{"A":"2项","B":"3项","C":"4项","D":"5项"},"answer":"D","explanation":"本题考查理论与政策。\n①②③④⑤正确，2024年12月11日至12日，习近平总书记出席中央经济工作会议并发表重要讲话。会议上总结我们党对经济工作的规律性认识，提出五个“必须统筹”。五个“必须统筹”是习近平总书记对新时代经济发展规律作出的重大论断，既是对已有实践的总结概括，更是对未来发展的启示引领，进一步丰富和发展了习近平经济思想。要深刻认识到，必须统筹好有效市场和有为政府的关系，这是形成既“放得活”又“管得住”的经济秩序的关键所在；必须统筹好总供给和总需求的关系，这是畅通国民经济循环的重要基础；必须统筹好培育新动能和更新旧动能的关系，这是因地制宜发展新质生产力的内在要求；必须统筹好做优增量和盘活存量的关系，这是全面提高资源配置效率的必由之路；必须统筹好提升质量和做大总量的关系，这是夯实中国式现代化的物质基础的必然要求。\n故正确的有①②③④⑤，共5项。\n故正确答案为D。","no":2,"missingImage":false},{"type":"question","qid":"12882012","cat":"时事政治","stem":"改革开放以来中国共产党先后召开10次“三中全会”，“改革”始终是不变的主题词。关于“三中全会”，下列说法不正确的是（    ）。","options":{"A":"党的十一届三中全会通过了《中共中央关于经济体制改革的决定》，规定了改革的方向性质任务和方针政策","B":"党的十六届三中全会通过了《中共中央关于完善社会主义市场经济体制若干问题的决定》，提出了转变政府职能，建立现代产权制度","C":"党的十八届三中全会通过了《中共中央关于全面深化改革若干重大问题的决定》吹响了全面深化改革的号角","D":"党的二十届三中全会通过了《中共中央关于进一步全面深化改革推进中国式现代化的决定》，明确了进一步全面深化改革的总目标"},"answer":"A","explanation":"本题考查理论与政策。\nA项错误，1984年10月20日，党的十二届三中全会通过了《中共中央关于经济体制改革的决定》，阐明了加快城市为重点的整个经济体制改革的必要性、紧迫性，规定了改革的方向、性质、任务和各项基本方针政策，是指导我国经济体制改革的纲领性文件。\nB项正确，2003年10月14日，党的十六届三中全会通过了《中共中央关于完善社会主义市场经济体制若干问题的决定》，提出鼓励非公有制经济发展、国企改革、转变政府职能、建立现代产权制度等。\nC项正确，2013年11月12日，党的十八届三中全会通过了《中共中央关于全面深化改革若干重大问题的决定》，吹响了全面深化改革的号角，以习近平同志为核心的党中央以巨大的政治勇气和智慧推动许多领域实现历史性变革、系统性重塑、整体性重构，开创了改革开放新局面。\nD项正确，2024年7月18日，党的二十届三中全会通过了《中共中央关于进一步全面深化改革推进中国式现代化的决定》。《决定》站在新的历史起点上，明确了进一步全面深化改革的总目标：继续完善和发展中国特色社会主义制度，推进国家治理体系和治理能力现代化。到二〇三五年，全面建成高水平社会主义市场经济体制，中国特色社会主义制度更加完善，基本实现国家治理体系和治理能力现代化，基本实现社会主义现代化，为到本世纪中叶全面建成社会主义现代化强国奠定坚实基础。\n本题为选非题，故正确答案为A。","no":3,"missingImage":false},{"type":"question","qid":"13504614","cat":"新思想","stem":"习近平总书记强调，要锚定2035年建成文化强国的战略目标，坚持马克思主义这一根本指导思想，植根博大精深的中华文明，顺应信息技术发展潮流，不断发展具有强大思想引领力、精神凝聚力、价值感召力、国际影响力的新时代中国特色社会主义文化，不断增强人民精神力量，筑牢强国建设、民族复兴的文化根基。下列做法有利于文化强国建设的是：\n①坚持用马克思主义激活中华传统文化中的优秀因子并赋予其新的时代内涵\n②坚持在文化建设中把经济效益放在首位、经济效益与社会效益相统一\n③坚持把激发创新创造活力作为深化文化体制机制改革的中心环节\n④坚持利用第一、合理发掘和积极干预原则，推动文化遗产系统性保护和利用","options":{"A":"①③","B":"①④","C":"②③","D":"②④"},"answer":"A","explanation":"本题考查理论与政策。\n2024年10月28日，中共中央政治局就建设文化强国进行第十七次集体学习，习近平总书记主持学习并发表重要讲话。\n①正确，④错误，习近平总书记指出，要在创造性转化和创新性发展中赓续中华文脉。高扬中华民族的文化主体性，把历经沧桑留下的中华文明瑰宝呵护好、弘扬好、发展好。深入挖掘和阐发中华优秀传统文化的精神内涵，用马克思主义激活中华传统文化中的优秀因子并赋予其新的时代内涵，发展新时代中国特色社会主义文化。秉持敬畏历史、热爱文化之心，坚持保护第一、合理利用和最小干预原则，推动文化遗产系统性保护和统一监管。\n②错误，③正确，习近平总书记指出，要着力激发全民族文化创新创造活力。坚持以人民为中心的创作导向，坚持把社会效益放在首位、社会效益与经济效益相统一，把激发创新创造活力作为深化文化体制机制改革的中心环节，加快完善文化管理体制和生产经营机制。\n故正确的是①③。\n故正确答案为A。","no":4,"missingImage":false},{"type":"question","qid":"13504566","cat":"时事政治","stem":"党的二十届三中全会提出，高水平社会主义市场经济体制是中国式现代化的重要保障。关于构建高水平社会主义市场经济体制，下列说法不正确的是：","options":{"A":"对侵犯各种所有制经济产权和合法利益的行为实行同责同罪同罚，完善惩罚性赔偿制度","B":"毫不动摇巩固和发展公有制经济，毫不动摇鼓励、支持、引导非公有制经济发展","C":"完善主要由市场竞争关系决定要素价格机制，防止政府对价格形成的不当干预","D":"推动市场基础制度规则统一、市场监管公平统一、市场设施高标准联通"},"answer":"C","explanation":"本题考查理论与政策。\n党的二十届三中全会通过了《中共中央关于进一步全面深化改革 推进中国式现代化的决定》，以下简称《决定》。\nA项正确，《决定》中“二、构建高水平社会主义市场经济体制”中“（7）完善市场经济基础制度”部分指出：“对侵犯各种所有制经济产权和合法利益的行为实行同责同罪同罚，完善惩罚性赔偿制度。”\nB项正确，《决定》中“二、构建高水平社会主义市场经济体制”中“（5）坚持和落实‘两个毫不动摇’”部分指出：“毫不动摇巩固和发展公有制经济，毫不动摇鼓励、支持、引导非公有制经济发展，保证各种所有制经济依法平等使用生产要素、公平参与市场竞争、同等受到法律保护，促进各种所有制经济优势互补、共同发展。”\nC项错误，《决定》中“二、构建高水平社会主义市场经济体制”中“（6）构建全国统一大市场”部分指出：“完善主要由市场供求关系决定要素价格机制，防止政府对价格形成的不当干预。”故“市场竞争关系决定要素价格机制”说法错误。\nD项正确，《决定》中“二、构建高水平社会主义市场经济体制”中“（6）构建全国统一大市场”部分指出：“推动市场基础制度规则统一、市场监管公平统一、市场设施高标准联通。”\n本题为选非题，故正确答案为C。","no":5,"missingImage":false},{"type":"question","qid":"13504677","cat":"时事政治","stem":"习近平总书记指出，“要把纪律建设摆在更加突出位置”，宣示了党中央以铁的纪律管党治党的政治定力和坚定决心。关于党的纪律建设，下列说法正确的有：\n①政治纪律中最根本的是坚定捍卫“两个确立”，坚决做到“两个维护”\n②组织纪律包括民主集中制这个根本制度、“四个服从”这个基本原则\n③廉洁纪律是保持干部队伍先进性和纯洁性、永葆生机和活力的关键\n④群众纪律是党的性质和宗旨的体现，是我们党区别于其他政治组织的显著标志\n⑤工作纪律的根本要求是党员要在工作中带头践行社会主义核心价值观","options":{"A":"2项","B":"3项","C":"4项","D":"5项"},"answer":"B","explanation":"本题考查理论与政策。\n①正确，坚决做到“两个维护”是党的政治建设的首要任务，也是党的根本政治纪律和政治规矩。必须深刻领悟“两个确立”的决定性意义，把握新时代新征程党的中心任务，坚定不移把“两个确立”真正转化为坚决做到“两个维护”的思想自觉、政治自觉、行动自觉，为全面建成社会主义现代化强国、全面推进中华民族伟大复兴提供根本政治保证。\n②正确，《中国共产党党章程》“总纲”的“第五，坚持民主集中制”部分指出：“民主集中制是民主基础上的集中和集中指导下的民主相结合。它既是党的根本组织原则，也是群众路线在党的生活中的运用······”“第二章 党的组织制度”的第十条指出：“党是根据自己的纲领和章程，按照民主集中制组织起来的统一整体。党的民主集中制的基本原则是：（一）党员个人服从党的组织，少数服从多数，下级组织服从上级组织，全党各个组织和全体党员服从党的全国代表大会和中央委员会。”\n③错误，强大的自我净化能力，是保持干部队伍先进性和纯洁性、永葆生机和活力的关键。作为党的干部，只有增强自我净化能力，并在此基础上不断自我完善、自我革新、自我提高，才能永葆共产党员清正廉洁的政治本色，成为一名党和人民需要的忠诚干净担当的好干部。\n④正确，中国共产党的性质为两个先锋队，即中国工人阶级先锋队、中国人民和中华民族先锋队。中国共产党的宗旨为全心全意为人民服务。群众纪律是党的各级组织和全体党员贯彻执行党的群众路线和处理党群关系必须遵守的行为规则。群众纪律是党的性质和宗旨的体现，是密切党同群众血肉联系的重要保证，是我们党区别于其他政治组织的显著标志和政治优势，更具有政党纪律的特色。\n⑤错误，工作纪律是党的各级组织和全体党员在党的各项具体工作中必须遵守的行为规则，是党的各项工作正常开展的重要保证，其本质要求是履职尽责，担当作为。2023年12月新修订的《中国共产党纪律处分条例》，着眼促进广大党员带头践行和弘扬社会主义核心价值观，在生活纪律中充实完善了相关条款，以更好发挥党员干部言行对全社会的示范效应。\n故正确的有①②④，共3项。\n故正确答案为B。","no":6,"missingImage":false},{"type":"question","qid":"12882014","cat":"新思想","stem":"全面推进依法治国是一个系统工程，必须加强党对法治工作的领导。下列与之相关的说法不正确的是（    ）","options":{"A":"党的领导是中国特色社会主义法治之魂，是中国法治同西方资本主义法治最大的区别","B":"全面依法治国必须抓住基层干部这个“关键少数”，基层干部要做守法用法的模范","C":"坚持党的领导、人民当家作主、依法治国有机统一，最根本的是坚持党的领导","D":"坚持党的领导，必须具体体现在党领导立法、保证执法、支持司法、带头守法上"},"answer":"B","explanation":"本题考查理论与政策。\nA项正确，2020年，习近平总书记在中央全面依法治国工作会议上指出：“党的领导是我国社会主义法治之魂，是我国法治同西方资本主义国家法治最大的区别。”这一重要论述深刻揭示了党的领导是中国特色社会主义法治的最鲜明特征和最根本保证。\nB项错误，2020年，习近平总书记在中央全面依法治国工作会议上强调：“要坚持抓住领导干部这个‘关键少数’。各级领导干部要坚决贯彻落实党中央关于全面依法治国的重大决策部署，带头尊崇法治、敬畏法律，了解法律、掌握法律，不断提高运用法治思维和法治方式深化改革、推动发展、化解矛盾、维护稳定、应对风险的能力，做尊法学法守法用法的模范。”因此“抓住基层干部这个‘关键少数’”的表述错误。\nC项正确，党是中国特色社会主义事业的领导核心，反映到社会主义民主政治建设上，就是党在政治生活中居于领导地位。习近平总书记明确指出：“我们强调坚持党的领导、人民当家作主、依法治国有机统一，最根本的是坚持党的领导。”\nD项正确，2019年《求是》杂志发表习近平总书记署名文章《加强党对全面依法治国的领导》中指出：“一是坚持加强党对依法治国的领导······必须坚持实现党领导立法、保证执法、支持司法、带头守法，健全党领导全面依法治国的制度和工作机制，通过法定程序使党的主张成为国家意志、形成法律，通过法律保障党的政策有效实施，确保全面依法治国正确方向。”\n本题为选非题，故正确答案为B。","no":7,"missingImage":false},{"type":"question","qid":"13504567","cat":"新思想","stem":"习近平总书记强调，要以人口高质量发展支撑中国式现代化。关于中国式现代化建设面临的新的人口形势，下列说法正确的是：\n①我国人口发展呈现少子化、老龄化、区域人口增减分化等明显的趋势性特征\n②人口减少会使消费投资动能减弱，但也可以倒逼经济发展从外延式扩张转向内涵式发展\n③人口数量、素质、结构已成为实现中国式现代化的决定性因素，“人口无关论”需要警惕\n④我国用几十年时间走完发达国家上百年工业化道路，人口转变速度快，人口减少来得早，打破了世界现代化发展一般规律","options":{"A":"①②","B":"②③","C":"①④","D":"③④"},"answer":"A","explanation":"本题考查理论与政策。\n2024年第22期《求是》杂志刊登了习近平总书记的文章《以人口高质量发展支撑中国式现代化》（以下简称文章）。\n①正确，文章在“（一）我国现代化建设面临新的人口形势”部分指出：“······随着经济社会发展和人口年龄结构变化，我国总体上已由人口增量发展转向减量发展阶段，人口发展呈现少子化、老龄化、区域人口增减分化等明显的趋势性特征。”\n②正确，③④错误，文章在“（一）我国现代化建设面临新的人口形势”部分指出：“要辩证看待人口负增长带来的影响。我国用几十年时间走完发达国家上百年工业化道路，人口转变速度快，人口减少来得早，但总体上是符合世界现代化发展一般规律的。人口减少会对发展带来一些不利影响，比如劳动力减少、消费投资动能减弱。同时，人口减少也有一些正面效应，比如减轻资源环境压力、倒逼经济发展从外延式扩张转向内涵式发展。总的看，人口减少对经济社会发展影响利弊兼有，不能只看一面，有些问题要长期看，不能急于下结论，既要反对‘人口决定论’，又要反对‘人口无关论’，趋利避害做好工作。”但“人口数量、素质、结构”并非实现中国式现代化的决定性因素及“打破了世界现代化发展一般规律”表述错误。\n故正确的是①②。\n故正确答案为A。","no":8,"missingImage":false},{"type":"question","qid":"12882013","cat":"时事政治","stem":"2024年中央经济工作会议强调，做好2025年经济工作，要实施更加积极的财政政策。关于2025年财政政策，下列相关说法不正确的是（    ）。","options":{"A":"降低财政赤字率，确保财政政策平稳发力、健康有序","B":"增加发行超长期特别国债，持续支持“两重”项目和“两新”政策实施","C":"增加地方政府专项债券发行使用，扩大投向领域和用作项目资本金范围","D":"优化财政支出结构，提高资金使用效益，更加注重惠民生、促消费、增后劲，兜牢基层“三保”底线"},"answer":"A","explanation":"本题考查理论与政策。\nA项错误，B、C、D三项正确，2024年中央经济工作指出，要实施更加积极的财政政策。提高财政赤字率，确保财政政策持续用力、更加给力。加大财政支出强度，加强重点领域保障。增加发行超长期特别国债，持续支持“两重”项目和“两新”政策实施。增加地方政府专项债券发行使用，扩大投向领域和用作项目资本金范围。优化财政支出结构，提高资金使用效益，更加注重惠民生、促消费、增后劲，兜牢基层“三保”底线。党政机关要坚持过紧日子。故A项中“降低财政赤字率”“确保财政政策平稳发力、健康有序”说法错误。\n本题为选非题，故正确答案为A。","no":9,"missingImage":false},{"type":"question","qid":"13504588","cat":"新思想","stem":"中国共产党历来重视法治建设，先后提出了一系列重要法治思想。其中，下列法治思想按提出时间先后顺序排列正确的是：\n①提出“建设中国特色社会主义法治体系”\n②提出“依法治国，建设社会主义法治国家”\n③提出“建立和完善社会主义市场经济法律体系”\n④提出“全面依法治国是国家治理的一场深刻革命”\n⑤提出“依法执政是新的历史条件下党执政的一个基本方式”","options":{"A":"③②⑤①④","B":"③①④②⑤","C":"①③②⑤④","D":"①②④⑤③"},"answer":"A","explanation":"本题考查理论与政策。\n①2014年党的十八届四中全会首次提出“建设中国特色社会主义法治体系”，并对全面推进依法治国作出了重大部署，提出了许多新论断、新观点、新举措，标定了法治中国的新方位。\n②1997年党的十五大提出要“依法治国，建设社会主义法治国家”，把依法治国确立为治国理政的基本方略。社会主义市场经济法律制度的建立，并非仅仅是对过去的法律制度的修补，而是法律体制上的一场深刻改革。\n③1993年党的十四届三中全会提出“建立和完善社会主义市场经济法律体系”。\n④2017年党的十九大提出“全面依法治国是国家治理的一场深刻革命”，必须坚持厉行法治，推进科学立法、严格执法、公正司法、全民守法。\n⑤2004年党的十六届四中全会提出“依法执政是新的历史条件下党执政的一个基本方式”。这个新论断是我们党对社会主义民主法制规律和党的执政规律的新认识，体现了坚持党的领导、人民当家作主和依法治国的有机统一。\n故正确排序为③②⑤①④。\n故正确答案为A。","no":10,"missingImage":false},{"type":"question","qid":"12882016","cat":"新思想","stem":"习近平总书记强调，新时代的文化工作者必须以守正创新的正气和锐气，赓续历史文脉、谱写当代华章。关于“守正”，下列说法正确的是（    ）。\n①守的是马克思主义在意识形态领域指导地位的根本制度\n②守的是“两个结合”的根本要求\n③守的是中国共产党的文化领导权和中华民族的文化主体性\n④守的是中华文化发展的思路、话语、机制和形式","options":{"A":"①②③","B":"①②④","C":"①③④","D":"②③④"},"answer":"A","explanation":"本题考查理论与政策。\n①②③正确，④错误，2023年6月2日，习近平总书记在文化传承发展座谈会上发表重要讲话。讲话的“三、更好担负起新的文化使命”部分指出：“守正，守的是马克思主义在意识形态领域指导地位的根本制度，守的是‘两个结合’的根本要求，守的是中国共产党的文化领导权和中华民族的文化主体性。创新，创的是新思路、新话语、新机制、新形式，要在马克思主义指导下真正做到古为今用、洋为中用、辩证取舍、推陈出新，实现传统与现代的有机衔接。”\n故正确的有①②③。\n故正确答案为A。","no":11,"missingImage":false},{"type":"question","qid":"13504586","cat":"毛中特","stem":"思想建党是党建之魂，解决的是党员干部世界观、人生观、价值观这个“总开关”的问题。关于思想建党，下列说法不正确的是：","options":{"A":"1929年古田会议确立了思想建党的原则","B":"1950~1954年整风整党运动开党内集中教育之先河","C":"党的十八大以来，党最先开展的主题教育是群众路线教育实践活动","D":"新中国成立后，党逐渐探索出一条党内集中性教育和经常性教育相结合的思想建党之路"},"answer":"B","explanation":"本题考查理论与政策。\nA项正确，1929年12月下旬，中国工农红军第四军第九次党的代表大会在福建上杭县古田镇召开。会议通过了毛泽东主持起草的《中国共产党红军第四军第九次代表大会决议案》。古田会议的中心思想是：用无产阶级思想进行军队和党的建设。古田会议确立了思想建党、政治建军的原则。\nB项错误，1942年至1945年进行的延安整风运动是中国共产党历史上第一次大规模的党内集中教育活动，开党内集中教育之先河。\nC项正确，党的十八大以来，党的群众路线教育实践活动、“三严三实”专题教育、“两学一做”学习教育、“不忘初心、牢记使命”主题教育、党史学习教育、学习贯彻习近平新时代中国特色社会主义思想主题教育、党纪学习教育等主题教育先后开展。\nD项正确，党内集中教育是由党中央宏观统筹、科学谋划的有组织、有计划、有步骤的教育实践，教育对象、内容和时间相对集中，教育形式相对明确。经常性教育重在融入日常、抓在平常，结合日常工作和生活实际经常抓、反复抓，实现教育的常态化长效化，从而持续巩固提升教育成果，推动党内集中教育走深走实。\n本题为选非题，故正确答案为B。","no":12,"missingImage":false},{"type":"question","qid":"12882015","cat":"时事政治","stem":"党的二十届三中全会《决定》提出“积极推进首发经济”。关于“首发经济”下列说法不正确的是：","options":{"A":"首发经济是指企业发布新产品，推出新业态、新模式、新服务、新技术，开设首店等经济活动的总称","B":"首发经济涵盖了企业从产品或服务的首次发布、首次展出到首次落地开设门店、首次设立研发中心，再到设立企业总部的链式发展全过程","C":"首发经济的吸引力，在根本上取决于企业的品牌效应","D":"首发经济自带创新属性，具有时尚、品质、新潮等特征"},"answer":"C","explanation":"本题考查理论与政策。\nA、B两项正确，首发经济是指企业发布新产品，推出新业态、新模式、新服务、新技术，开设首店等经济活动的总称，涵盖了企业从产品或服务的首次发布、首次展出到首次落地开设门店、首次设立研发中心，再到设立企业总部的链式发展全过程。首发经济注重“首次活动”和“链式发展过程”，具备一定的引领性和潮流性，因此是推动地方商业创新、释放消费势能的重要手段。\nC项错误，首发经济的吸引力取决于品牌势能、城市资源、政策支持、消费需求等多维因素。故“从根本上取决于企业的品牌效应”说法有误。\nD项正确，首发经济自带创新属性，重点表现为向市场推出的新产品、新技术、新服务、新业态、新模式等创新成果。首发经济具有时尚、品质、新潮等特征，是符合消费升级趋势和高质量发展要求的一种经济形态，是一个地区商业活力、消费实力、创新能力、国际竞争力、品牌形象和开放度的重要体现。\n本题为选非题，故正确答案为C。","no":13,"missingImage":false},{"type":"question","qid":"13504569","cat":"新思想","stem":"习近平总书记强调：“新质生产力的显著特点是创新，既包括技术和业态模式层面的创新，也包括管理和制度层面的创新。必须继续做好创新这篇大文章，推动新质生产力加快发展。”下列没有体现新质生产力特点的是：","options":{"A":"某民营企业研发的商用高分辨率遥感卫星，在防汛救灾中发挥了重要作用","B":"某市积极打造“低空经济第一城”，在全市公园加快推进无人机配送服务","C":"某服装企业通过技术平台整合数字资源，实现一条生产线生产多款服装","D":"某企业为获得更多经济效益，在生产中持续加大能源和原材料的投入"},"answer":"D","explanation":"本题考查理论与政策。\nA项正确，某民营企业研发商用高分辨率遥感卫星，这体现了技术层面的创新。通过研发新的卫星技术，使其在防汛救灾中发挥重要作用，展现了新质生产力通过技术创新来创造新价值、满足新需求的特点。\nB项正确，某市打造“低空经济第一城”，推进无人机配送服务，属于业态模式层面的创新。利用无人机这种新兴技术手段，开创了新的物流配送模式，改变了传统的物流业态，体现了新质生产力在业态模式上的创新发展。\nC项正确，某服装企业通过技术平台整合数字资源，实现一条生产线生产多款服装，这是管理和技术层面的创新。借助技术平台对生产流程进行优化整合，提高了生产效率和灵活性，体现了新质生产力通过管理和技术创新来提升生产效能的特点。\nD项错误，某企业在生产中持续加大能源和原材料的投入，这只是传统生产力发展模式中依靠增加生产要素投入来扩大生产规模、获取经济效益的方式，没有涉及技术、业态模式、管理和制度等层面的创新，不符合新质生产力以创新为显著特点的要求。\n本题为选非题，故正确答案为D。","no":14,"missingImage":false},{"type":"question","qid":"13504543","cat":"新思想","stem":"习近平总书记强调，全面深化改革必须以促进社会公平正义、增进人民福祉为出发点和落脚点，从人民整体利益、根本利益、长远利益出发谋划和推进改革，多推出一些民生所急、民心所向的改革举措，多办一些惠民生、暖民心、顺民意的实事，做到老百姓关心什么、期盼什么，改革就要抓住什么、推进什么。下列改革措施能够体现上述要求的是：\n①推行“三明医改”经验\n②推行新生儿“出生一件事”“最多跑一次”联办服务\n③推出“无事不扰”企业清单试点改革\n④推行社区“嵌入式”养老模式","options":{"A":"①②③","B":"①③④","C":"①②④","D":"②③④"},"answer":"C","explanation":"本题考查理论与政策。\n①正确，“三明医改”是福建省三明市实施的医药卫生体制改革，以公立医院综合改革为切入点，市、县、乡、村统筹推进医疗、医保、医药“三医联动”改革，通过改革降低了药品耗材价格，让百姓看病更便宜；提高了医保报销比例，使百姓享受更多医保福利；还调整了医疗服务收费标准，提升了医务人员薪酬，改善了医患关系，体现了以促进社会公平正义、增进人民福祉为出发点和落脚点。\n②正确，推行新生儿“出生一件事”“最多跑一次”联办服务方便了新生儿父母办理相关手续，将涉及多个部门的事项整合，让群众少跑腿，节省了时间和精力，解决了百姓在新生儿出生后办理各种证件和手续时面临的繁琐问题，是惠民生、暖民心的改革举措，体现了以人民为中心，从人民群众的实际需求出发推进改革。\n③错误，推行“无事不扰”企业清单试点改革是指将风险低、信用好的优质经营主体纳入一个清单中，最大限度地减少对这些企业的现场检查，从而为企业发展打造更加宽松的市场环境。旨在优化营商环境，减轻企业负担，激发市场活力，促进经济发展。并非直接针对民生领域。\n④正确，社区“嵌入式”养老模式是指将养老服务融入社区，让老年人能够在熟悉的环境中接受养老服务，方便子女照顾，提高了老年人的生活质量，解决了养老这一民生难题，是顺应民意、增进人民福祉的改革举措。\n故①②④表述正确。\n故正确答案为C。","no":15,"missingImage":false}],"count":15,"answerable":15,"pointsOf":10},{"label":"常识判断","items":[{"type":"question","qid":"13504577","cat":"人文常识","stem":"我国语言文字博大精深，源远流长，是中华文化的重要载体。关于我国语言文字，下列说法不正确的是：","options":{"A":"我国共有分属汉藏、阿尔泰、南亚、南岛、印欧五大语系的包括汉语在内130余种语言","B":"周代“雅言”、秦代“书同文”、汉代“通语”、宋元“正音”、明清“官话”体现的是我国通用语言文字传统","C":"我国各民族在历史上曾经创造过众多文字种类，大多数民族语言都有与之相适应的文字，这些文字具有通用性","D":"甲骨文已成功申报“世界记忆名录”，这是中华语言文明走向国际社会的实证"},"answer":"C","explanation":"本题考查人文常识。\nA项正确，中国民族语言，按语言谱系分类法，大体上分别属于汉藏、阿尔泰、南亚、南岛、印欧五大语系。其中，汉语属于汉藏语系，而其他少数民族语言则分属不同的语系。据统计，中国境内共有130多种语言。\nB项正确，中国历史上一直有通用语言文字的传统，这些通用语言在不同时期有不同的名称：周代“雅言”、秦代“书同文”、汉代“通语”、宋元“正音”、明清“官话”。这些不同历史时期的通用语言文字，反映了我国在语言规范化、标准化方面的不断努力和传承，体现了中华民族对语言文字统一和规范的重视，反映了我国通用语言文字的传统。\nC项错误，我国各民族在历史上确实创造过多种文字，但并不是大多数民族语言都有与之相适应的文字，而且这些文字并不都具有通用性。许多少数民族语言在历史上并没有发展出独立的文字系统，或者其文字系统并未广泛使用。同时，不同民族的文字系统之间并不具有通用性，它们各自服务于特定的语言和文化群体。\nD项正确，2017年11月24日，甲骨文成功入选《世界记忆名录》，成为了世界文化交流与传承的重要桥梁。甲骨文作为我国目前已知最早的成体系的文字形式，承载着殷商时期大量的政治、经济、文化等信息。它成功入选，无疑是中华语言文明走向国际社会，被世界认可和重视的有力实证。\n本题为选非题，故正确答案为C。","no":16,"missingImage":false},{"type":"question","qid":"13504688","cat":"法律常识","stem":"证据是引导诉讼走向的决定性因素，人民法院根据证据认定案件事实，依法作出裁判。关于证据，下列说法不正确的是：","options":{"A":"证据必须经过查证属实，才能作为定案的根据","B":"案件当事人以视听资料作为证据的，应当提供存储该视听资料的原始载体","C":"电子数据的制作者制作的与原件一致的副本可以视为电子数据的原件并作为证据","D":"证人所作的陈述必须是亲身经历的，从其他人、其他地方间接得知的不能作为证据"},"answer":"D","explanation":"本题考查法律常识。\nA项正确，根据《中华人民共和国民事诉讼法》第六十六条第二款规定：“证据必须查证属实，才能作为认定事实的根据。”\nB项正确，根据《最高人民法院关于民事诉讼证据的若干规定》第十五条第一款规定：“当事人以视听资料作为证据的，应当提供存储该视听资料的原始载体。”\nC项正确，根据《最高人民法院关于民事诉讼证据的若干规定》第十五条第二款规定：“当事人以电子数据作为证据的，应当提供原件。电子数据的制作者制作的与原件一致的副本，或者直接来源于电子数据的打印件或其他可以显示、识别的输出介质，视为电子数据的原件。”\nD项错误，根据《中华人民共和国民事诉讼法》第七十五条第一款规定：“凡是知道案件情况的单位和个人，都有义务出庭作证。有关单位的负责人应当支持证人作证。”因此，证人陈述的是其知道的案件情况，该情况既可以是其亲身经历的，也可以是从其他人、其他地方间接得知的。\n本题为选非题，故正确答案为D。","no":17,"missingImage":false},{"type":"question","qid":"13504573","cat":"人文常识","stem":"近年来，“元宇宙”已成为全球科技关注的焦点，正在为产业带来新变革，昭示着数字化未来的无限可能性。从哲学上看，下列关于“元宇宙”的说法不正确的是：","options":{"A":"元宇宙是人的实践活动的产物","B":"元宇宙是对物质世界的摹写和反映","C":"元宇宙归根到底是现实世界的一种延伸和拓展","D":"元宇宙本质上是从物质世界中独立出来的精神世界"},"answer":"D","explanation":"本题考查马克思主义。\nA项正确，元宇宙是人类通过技术手段创造出来的虚拟空间，它是人类实践活动的产物。人们运用各种技术，如虚拟现实、增强现实、区块链等，来构建元宇宙，体现了人类的实践活动对其产生的作用。\nB项正确，元宇宙中的各种元素、场景、规则等，都是对现实物质世界的摹写和反映。它可能会对现实世界的某些方面进行夸张、变形或重新组合，但本质上是基于现实世界的。\nC项正确，元宇宙是利用数字技术将现实世界进行数字化拓展和延伸的虚拟空间，它在一定程度上反映了现实世界的特征和需求，是现实世界在数字领域的一种延伸和拓展。\nD项错误，元宇宙并不是从物质世界中独立出来的精神世界。虽然它具有虚拟性，但它是建立在物质基础之上的，依赖于计算机硬件、网络基础设施等物质条件，并且其内容也是对物质世界的反映，不能脱离物质世界而独立存在。\n本题为选非题，故正确答案为D。","no":18,"missingImage":false},{"type":"question","qid":"13504559","cat":"人文常识","stem":"关于中国古代公文制度，下列说法不正确的是：","options":{"A":"押署制度是一种公文用印制度","B":"贴黄制度是一种公文改错制度","C":"票拟制度是一种公文分级保密制度","D":"驿传制度是一种接待往来官员和负责公文传递事务的制度"},"answer":"C","explanation":"本题考查人文常识。\nA项正确，押署制度是一种公文签署认证制度，官员在文书末尾签名或画押（如“画诺”“画可”），确认责任归属，与用印（如官印、骑缝章）共同构成公文合法性凭证。其核心是官员通过签署姓名或个性化符号确认公文责任，如宋代的花押制度要求官员签署公文时需“签押+官印”并用。\nB项正确，贴黄是唐朝首创的一种公文纠错制度，武则天时期规定奏章有误需以黄纸贴补修改（“诏敕有误，贴黄改之”）；宋代发展为摘要制度，官员在奏疏前贴黄纸写内容梗概，方便皇帝快速阅览。\nC项错误，票拟是明朝内阁代皇帝草拟批复意见的一种制度，内阁大臣在奏章上贴小票（“票签”）写处理建议，供皇帝裁定（如“准”“依议”），属于公文的处理流程，与公文的分级保密无关。\nD项正确，驿传制度是中国古代专门接待往来官员和负责政府文书传递事务的组织制度以及为此而征发的徭役制度，始自先秦，历经秦汉隋唐宋元明清（如汉代“三十里一驿”），直至清末新式邮政建立才逐渐废止。\n本题为选非题，故正确答案为C。","no":19,"missingImage":false},{"type":"question","qid":"12882017","cat":"人文常识","stem":"翻开中华民族5000多年的厚重历史，总的来看，凡属盛世都是法治相对健全的时期。对此，下列相关说法不正确的是（    ）。","options":{"A":"战国时商鞅“立木建信”，强调“法必明、令必行”，使秦国强大起来","B":"汉武帝时期形成汉律六十篇，在两汉沿用了近400年","C":"唐太宗以奉法为治国之重，一部《贞观律》为“贞观之治”奠定了基石","D":"明太祖朱元璋与百姓“约法三章”，为其一统天下发挥了重要作用"},"answer":"D","explanation":"本题考查人文常识。\nD项错误，A、B、C三项正确，2018年8月24日习近平总书记在中央全面依法治国委员会第一次会议上的讲话中指出：“历史和现实都告诉我们，法治兴则国兴，法治强则国强。从我国古代看，凡属盛世都是法制相对健全的时期。春秋战国时期，法家主张‘以法而治’，偏在雍州的秦国践而行之，商鞅‘立木建信’，强调‘法必明、令必行’，使秦国迅速跻身强国之列，最终促成了秦始皇统一六国。汉高祖刘邦同关中百姓‘约法三章’，为其一统天下发挥了重要作用。汉武帝时形成的汉律60篇，两汉沿用近400年。唐太宗以奉法为治国之重，一部《贞观律》成就了‘贞观之治’；在《贞观律》基础上修订而成的《唐律疏议》，为大唐盛世奠定了法律基石。”\n本题为选非题，故正确答案为D。","no":20,"missingImage":false},{"type":"question","qid":"13504571","cat":"人文常识","stem":"礼是中国文化最内在的要素之一，也是中华文明最醒目的表征之一。关于礼，下列说法不正确的是：","options":{"A":"“周监于二代，郁郁乎文哉！吾从周”是孔子对周朝礼制丰富而又有文采的赞赏","B":"“五礼”是指吉、凶、军、宾、嘉五种礼制，其中嘉礼是指邦国间朝觐聘享之礼","C":"“冠礼”与“笄礼”分别指男子和女子的成年礼，古代“笄礼”多于上巳节举行","D":"“经国家，定社稷，序民人，利后嗣者也”是指礼对整合社会与建立秩序的重要作用"},"answer":"B","explanation":"本题考查人文常识。\nA项正确，“周监于二代，郁郁乎文哉！吾从周”出自《论语・八佾》，意思是孔子说：周朝的礼仪制度是以夏商两代为根据制定的，多么丰富多彩呀，我主张周朝的。\nB项错误，“五礼”是指吉、凶、军、宾、嘉五种礼制，祭祀之事为吉礼，丧葬之事为凶礼，军旅之事为军礼，宾客之事为宾礼，冠婚之事为嘉礼。邦国间朝觐聘享之礼属于宾礼而不是嘉礼。\nC项正确，“冠礼”是加冠之礼，即男子成人礼，按照古礼的规定，男子在二十岁时行“冠礼”。“笄礼”是女子的成人礼，女子在十五岁到二十岁之间行“笄礼”，农历三月三是上巳节，又叫女儿节，一般“笄礼”在这个日子举行。\nD项正确，“经国家，定社稷，序民人，利后嗣者也”出自《左传・隐公・隐公十一年》，意思是礼制，是可以治理国家，稳定政权，安抚百姓，并有利于后世子孙的。体现了礼对整合社会与建立秩序的重要作用。\n本题为选非题，故正确答案为B。","no":21,"missingImage":false},{"type":"question","qid":"13504579","cat":"科技常识","stem":"随着科技的发展，人类探索世界的脚步逐步迈向太空。在太空中，航天员的身体要经受多重考验。对此，下列说法不正确的是：","options":{"A":"航天员在航天飞行中会出现骨质疏松","B":"航天员在进入太空的初期会迷失方向","C":"航天员在太空中身体下肢会出现肿胀","D":"男女航天员飞行中会有生理心理差异"},"answer":"C","explanation":"本题考查科技常识。\nA项正确，在太空失重状态下，人体骨骼不再承受地球重力带来的力学刺激。而这种力学刺激对于维持骨骼的正常代谢和骨量至关重要。缺乏重力刺激后，成骨细胞的活性会受到抑制，其生成新骨的能力下降；同时，破骨细胞的活性相对增强，会加速骨组织的吸收和破坏，导致骨量逐渐丢失，进而引发骨质疏松。\nB项正确，太空环境与地球环境差异巨大，航天员在进入太空初期，视觉、前庭系统等接收的信息与在地球上习惯的信息不同，容易出现空间定向障碍，迷失方向。\nC项错误，在太空失重环境下，人体血液会重新分布，更多地流向头部和上身，表现为脸变胖，巩膜、鼻和口腔黏膜充血，眼窝浮肿，头和颈部静脉扩张，腿围径变小等。而不是下肢出现肿胀，反而可能会因血液供应相对减少而变细。\nD项正确，男女航天员由于生理结构不同，在太空飞行中可能会面临不同的生理挑战，如女性航天员可能会面临月经周期变化等问题。同时，男女航天员在心理方面也存在差异，对太空飞行的心理反应和应对方式也会有所不同。\n本题为选非题，故正确答案为C。","no":22,"missingImage":false},{"type":"question","qid":"12882021","cat":"人文常识","stem":"在中国传统建筑中，“门当”指的是大门外的石墩或石鼓，“户对”则是指大门上方门楣上的门簪。下列关于门当户对的说法错误的是（    ）。","options":{"A":"户对的数量都是双数","B":"有门当的宅院必有户对","C":"户对数量越多象征着主人的身份等级越尊贵","D":"文官宅院用方形门当，武官宅院用圆形门当"},"answer":"B","explanation":"本题考查人文常识。\nA项正确，户对的数量与宅主身份相关，但形制必为偶数，既体现对称美与礼制规范，也符合中国传统文化中“双数为吉”的寓意。\nB项错误，门当和户对在中国传统建筑中是相辅相成的元素，理论上有门当的宅院一般都有户对，但现实中有门当没有户对的情况也存在。不同地区和习俗都可能影响建筑中这两种元素的配置。\nC项正确，户对数量是古代建筑中“以物显秩”的核心标志，户对数量越多，主人身份越尊贵，其等级规则与封建社会官僚体系严密对应。\nD项正确，门当的形制与官职的对应关系一般是，文官使用方形门当（象征砚台或印章）；武官使用圆形门当（象征战鼓或车轮，代表武权）。但随着历史的变迁，社会风俗也在发生演变，后世也有许多不遵循这等讲究的情况。\n注：本题存在瑕疵，我国地大物博，风俗民情多样，多有例外情况存在。综合来看，B项说法更不严谨，粉笔倾向于该项错误。\n本题为选非题，故正确答案为B。","no":23,"missingImage":false},{"type":"question","qid":"13504583","cat":"人文常识","stem":"2024年7月27日，联合国教科文组织第46届世界遗产大会通过决议，将“北京中轴线——中国理想都城秩序的杰作”成功列入《世界遗产名录》。关于北京中轴线，下列表述不正确的是：","options":{"A":"属于文化遗产中的建筑群类型","B":"是世界上现存最长的城市中轴线","C":"是“以中为尊”文化传统的生动实践","D":"包含了宋、元、明、清及近现代城市演变的历史积淀"},"answer":"D","explanation":"本题考查人文常识。\nA项正确，北京中轴线属于文化遗产中的建筑群类型。它由一系列古建筑和相关设施组成，包括永定门、正阳门及箭楼等，这些建筑共同构成了一个庞大而有序的建筑群，体现了中国古代城市规划和建筑艺术的高超水平。\nB项正确，北京中轴线是世界上现存最长的城市中轴线。它南起永定门，北至钟鼓楼，全长约7.8公里，贯穿了北京老城的核心区域，展现了中国古代城市规划中对中轴线对称布局的极致追求。\nC项正确，北京中轴线是“以中为尊”文化传统的生动实践。在中国传统文化中，“中”具有特殊的地位和象征意义，代表着正统、尊贵和中心。北京中轴线将城市的重要建筑沿中轴线对称分布，体现了对“中”的尊崇，彰显了皇权的至高无上和国家的核心地位。\nD项错误，北京中轴线主要包含了元、明、清及近现代城市演变的历史积淀，不涉及宋代。北京中轴线的规划和建设始于元代，当时忽必烈定都大都，按照“前朝后市，左祖右社”的原则规划城市，奠定了中轴线的基本格局。明清时期，在元代的基础上进一步完善和发展，形成了如今所见的规模和风貌。\n本题为选非题，故正确答案为D。","no":24,"missingImage":false},{"type":"question","qid":"13504610","cat":"科技常识","stem":"中华优秀传统文化蕴含着丰富的人与自然和谐共生理念。下列古语没有体现人与自然和谐共生理念的是：","options":{"A":"天地与我并生，而万物与我为一","B":"天地之大德曰生，生生之谓易","C":"草木荣华滋硕之时，则斧斤不入山林，不夭其生，不绝其长也","D":"竭泽而渔，岂不获得？而明年无鱼；焚薮而田，岂不获得？而明年无兽"},"answer":"B","explanation":"本题考查人文常识。\nA项正确，“天地与我并生，而万物与我为一”出自《庄子・齐物论》，意思是天地与我同生，万物与我是一体的，强调了人与自然的和谐统一，体现出人与自然和谐共生理念。\nB项错误，“天地之大德曰生，生生之谓易”出自《周易・系辞下》，意思是天地最大的品德是孕育生命，生生不息就是变化的道理，主要强调了天地生育万物的品德和变化的规律，没有直接体现人与自然和谐共生的理念。\nC项正确，“草木荣华滋硕之时，则斧斤不入山林，不夭其生，不绝其长也”出自《荀子・王制》，意思是在草木生长茂盛的时候，不允许进入山林砍伐，不使它们过早死亡，不截断它们的生长，体现了对自然万物生长规律的尊重，蕴含了人与自然和谐共生的理念。\nD项正确，“竭泽而渔，岂不获得？而明年无鱼；焚薮而田，岂不获得？而明年无兽”出自《吕氏春秋・义赏》，意思是排干湖水来捕鱼，怎么会捕不到呢？但是第二年就没有鱼了；烧毁树林来打猎，怎么会打不到呢？但是第二年就没有野兽了，强调了过度开发利用自然资源的危害，从反面体现了人与自然应和谐共生的理念。\n本题为选非题，故正确答案为B。","no":25,"missingImage":false},{"type":"question","qid":"13504606","cat":"科技常识","stem":"中华文明探源工程应用了大量自然科学新技术与新方法，从而取得一系列重大成果。下列领域研究与所应用的新技术新方法对应不正确的是：","options":{"A":"研究当时不同地区人们的主食种类以及不同阶层的蛋白质摄入量——古DNA技术","B":"确认良渚古城外围的庞大水利系统及其防洪灌溉功能——遥感和GIS地理信息系统","C":"研究陶器和原始瓷器的烧制工艺技术——硅酸盐技术","D":"研究商周时期青铜器矿料来源——铅同位素分析方法"},"answer":"A","explanation":"本题考查科技常识。\nA项错误，研究当时不同地区人们的主食种类以及不同阶层的蛋白质摄入量，主要是通过人骨中包含的碳、氮同位素进行分析。通过分析人骨中的碳、氮同位素，可以了解古人食物中不同来源蛋白质的比例，进而推断出主食种类以及不同阶层的蛋白质摄入量。古DNA技术主要用于研究古代人类的血缘关系、遗传特征、种群迁徙等方面。\nB项正确，遥感和GIS地理信息系统可以通过卫星图像、航空摄影等技术，获取大面积的地形、地貌、水系等信息，并进行分析和处理。在确认良渚古城外围的庞大水利系统及其防洪灌溉功能时，利用遥感和GIS技术能够清晰地看到水坝、河道等水利设施的分布和形态，分析其规模、结构和功能，了解其在防洪、灌溉、水运等方面的作用。\nC项正确，陶器和原始瓷器的主要成分是硅酸盐，硅酸盐技术可以通过对陶器和原始瓷器的成分、结构、烧制温度、烧制工艺等方面进行研究，了解古代的制陶和制瓷技术。\nD项正确，青铜是红铜与锡、铅等化学元素混合而成的合金。铅同位素分析方法是研究商周时期青铜器矿料来源的重要方法之一。不同地区的铅矿具有不同的铅同位素，通过对青铜器中铅同位素的分析，可以与已知产地的铅矿进行对比，从而推断出青铜器的矿料来源。\n本题为选非题，故正确答案为A。","no":26,"missingImage":false},{"type":"question","qid":"13504557","cat":"人文常识","stem":"不同的户外运动，应选择不同颜色的运动服。对此，下列相关说法正确的是：","options":{"A":"在夏季户外骑行中，白色、黄色可更好地防止紫外线辐射皮肤","B":"在冬季滑雪运动中，黑色、紫色更能给穿着者温暖的视觉感受","C":"在室外泳池游泳中，橙色、红色更能提高自己在水中的可见度","D":"在原始丛林探险中，绿色、黄色更能使团队成员及时发现自己"},"answer":"C","explanation":"本题考查科技常识。\nA项错误，在夏季户外骑行中，虽然白色给人凉爽的体感，且对紫外线有较高反射率，可反射部分紫外线，但它对紫外线的吸收率极低，夏季骑行常用的轻薄运动面料织密度不足，未被反射的紫外线易穿透到达皮肤，日常防晒效果并不佳；黄色也不属于防晒性能好的颜色。一般来说，同面料、同厚度、同织密度的同规格深色系服装，可吸收绝大多数紫外线，大幅减少到达皮肤的紫外线，防晒性能相对更好，如黑色、藏青色、红色、深绿色、紫色等。如果是专业防紫外线面料，颜色对防晒功能的影响则不大。\nB项错误，在冬季滑雪运动中，鲜艳的颜色如红色、橙色、荧光黄等更能给穿着者温暖的视觉感受，同时也能提高自己的可见性，在高速滑行时提醒别人避让，防止发生碰撞，在危险发生时有利于救援人员发现受伤人员，及时施救。而黑色和紫色属于深色系，它们不如鲜艳颜色在雪地上那么醒目，不能给穿着者温暖的视觉感受，也不能很好地起到警示和便于救援的作用。\nC项正确，在室外泳池游泳中，橙色、红色等鲜艳的颜色属于荧光色系或与荧光色相近，荧光色系的泳衣在水中的可见度较高，能够让游泳者在水中更加醒目，便于家长或救生员观察，保障游泳者的安全。这是因为这些颜色与水的颜色对比度强烈，容易被人眼察觉。\nD项错误，在原始丛林探险中，绿色容易与丛林中的植被颜色混淆，不利于团队成员及时发现自己。而黄色属于鲜艳的颜色，在丛林环境中比较醒目，更有利于团队成员相互识别。一般来说，在原始丛林探险时，为了便于识别和安全，应选择与丛林环境对比度高的颜色，如橙色、红色等鲜艳的颜色。\n故正确答案为C。","no":27,"missingImage":false},{"type":"question","qid":"13504608","cat":"人文常识","stem":"在中华传统文化中，以声音为介质的文化被称为“有声文化”。关于中华传统有声文化，下列说法正确的是：","options":{"A":"中国传统乐器最早以“八音”来分类，“八音”指八声音律","B":"宫商角徵羽是中国古乐五种基本音阶，传统戏剧中通常使用","C":"秦汉时期伴随《诗经》的吟诵和吟唱，曲谱开始出现并流行","D":"诗词格律以平仄和押韵作为声音形式，平声包括上声和入声"},"answer":"B","explanation":"本题考查人文常识。\nA项错误，中国传统乐器最早以“八音”来分类，根据乐器的不同制作材料，分成金、石、丝、竹、匏、土、革、木八类，而不是八声音律。\nB项正确，宫商角徵羽这五音是中国古乐的基本音阶，类似现在简谱中的1、2、3、5、6。在古代，宫商角徵羽被广泛应用于宫廷音乐、祭祀音乐、戏曲音乐等方面。‌\nC项错误，《诗经》是中国古代诗歌开端，收集了西周初年至春秋中叶的诗歌，主要是通过口传心授的方式传承和传播。秦汉时期尚未出现能够准确记录音乐旋律和节奏的曲谱，中国工尺谱是世界上最早的乐谱之一，唐代（7世纪）已经基本成形。\nD项错误，诗词格律以平仄、押韵、对仗作为声音形式。平仄是诗词中用字的声调，在古代汉语中，声调分为平、上、去、入四声，其中平声为平，上、去、入三声为仄。\n故正确答案为B。","no":28,"missingImage":false},{"type":"question","qid":"13504623","cat":"人文常识","stem":"脸谱是我国古典戏曲独特的表现手法之一，其作用在于以色彩和线条来突出净、丑、生、旦所扮演的各种人物的特点。下列图片中的脸谱，属于“净”的是：\n\u003cimg data-k=\"9f2345dd44ec\" style=\"max-width:598px\">","options":{"A":"A","B":"B","C":"C","D":"D"},"answer":"D","explanation":"本题考查人文常识。\n不同行当的脸谱，情况不一。“生”、“旦”面部妆容简单，略施脂粉，叫“俊扮”“素面”“洁面”。而“净行”与“丑行”面部绘画比较复杂，特别是“净”，都是重施油彩，图案复杂，因此称“花脸”。戏曲中的脸谱，主要指净的面部绘画。而“丑”，因其扮演喜剧角色，故在鼻梁上抹一小块白粉，俗称“小花脸”。\nA、B两项错误，脸谱线条、面部妆容简单，略施脂粉，更符合“生”角、“旦”角脸谱形象。\nC项错误，脸谱相对简约，且鼻梁上白粉明显，更符合“丑”角脸谱形象。\nD项正确，脸谱色彩浓重，图案夸张，更符合“净”角脸谱形象。\n故正确答案为D。","no":29,"missingImage":false},{"type":"question","qid":"13504602","cat":"人文常识","stem":"下列生产建设中需要的玻璃与其材料类型要求对应正确的是：","options":{"A":"平面广告保护屏——防眩玻璃","B":"建筑用玻璃幕墙——光伏玻璃","C":"液晶电视显示屏——节能玻璃","D":"光电器件的盖板——防火玻璃"},"answer":"A","explanation":"本题考查科技常识。\nA项正确，平面广告保护屏常置于户外或高亮度环境中，易受强光反射影响。防眩玻璃通过表面处理减少反光，提升内容可视性，适合广告屏的需求。\nB项错误，普通建筑玻璃幕墙主要使用钢化玻璃、夹层玻璃等，以满足采光、隔热、隔音、安全等不同要求。光伏玻璃用于幕墙时属于特殊应用，需结合太阳能发电功能。\nC项错误，液晶电视显示屏主要是利用液晶玻璃的特性来实现图像显示，如轻薄、节能、色彩丰富、视角宽广等。节能玻璃一般是指在玻璃表面镀膜或采用特殊的结构，以减少热量传递和反射光线的玻璃，常用于建筑门窗等领域，以降低建筑物的能耗，与此用途无关。\nD项错误，光电器件的盖板通常需要具备高强度、高透光率、韧性好、抗划伤等性能，以保护光电器件内部的精密电子元器件，一般会使用强化玻璃等材料。防火玻璃主要用于对防火性能有要求的场所，如建筑物的防火分区、防火墙、防火门等。\n故正确答案为A。","no":30,"missingImage":false}],"count":15,"answerable":15,"pointsOf":10},{"label":"数量关系","items":[{"type":"question","qid":"12882024","cat":"数学运算","stem":"某商场开展减价促销活动，每件商品进价5元，售价10元，销出5件。若每降价1元，则销量增加5件。问降价多少元后，总利润不变？","options":{"A":"1","B":"2","C":"3","D":"4"},"answer":"D","explanation":"设降价x元后，总利润不变。由题意可知，总利润为（10-5）×5=25元，根据“总利润不变”可列式：\u003cimg data-k=\"49e5fc50b77e\">，化简可得\u003cimg data-k=\"7b46d5e225ec\">，结合选项代入，x=4时满足题意。故降价4元后，总利润不变。\n故正确答案为D。","no":31,"missingImage":false},{"type":"question","qid":"13504572","cat":"数学运算","stem":"某单位接到一项任务，探访所在辖区的商户了解相关信息。原计划由5人10天完成探访200家商户工作任务，工作5天后，由于工作调整，需要增加探访辖区的300家商户。假定所有人工作效率相同，若仍要求在原计划时间之内完成，则需要增加的人数为：","options":{"A":"10人","B":"15人","C":"20人","D":"25人"},"answer":"B","explanation":"根据题意，所有人工作效率相同，则工作效率\u003cimg data-k=\"687d433f0b2f\">；再根据题意，原来5人，后面假设增加x人，则后来为（5+x）人；原计划10天完成，先探访了5天，后面按原计划需要再做10-5=5天，最终完成总的工作量，总的工作量为200+300=500家。列式：5×4×5+（5+x）×4×5=500，解得x=15。\n故正确答案为B。","no":32,"missingImage":false},{"type":"question","qid":"13504576","cat":"数学运算","stem":"甲乙两辆车相距200米，同向同时沿直线出发，乙保持5米/秒的速度匀速前行，甲从速度为零起步做匀加速运动追赶乙，10秒后恰好追上乙，则甲在追上乙时的速度为：","options":{"A":"10米/秒","B":"30米/秒","C":"50米/秒","D":"70米/秒"},"answer":"C","explanation":"设甲全程的平均速度为\u003cimg data-k=\"3e018cbb6cf4\">，甲乙同向同时沿直线出发，10秒后甲追上乙，根据直线追及公式：S=速度差×时间，可得\u003cimg data-k=\"0f4bb4772d00\">，解得\u003cimg data-k=\"736d60f1abf2\">米/秒，即甲全程的平均速度为25米/秒。已知甲是从速度为0起步做匀加速运动，根据公式：匀加速运动的平均速度\u003cimg data-k=\"2e3a18b90e61\">，可得\u003cimg data-k=\"895e0099c110\">，解得\u003cimg data-k=\"7c49b2951282\">，即甲在追上乙时的速度为50米/秒。\n故正确答案为C。","no":33,"missingImage":false},{"type":"question","qid":"12882023","cat":"数学运算","stem":"棒球队招募两个位置的队员，分别为击球手和投球手，共有10人报名，其中5人只报名击球手，3人只报名投手，另外两人既报名击球手又报名投手。若球队在报名人员中随机抽取2人，则此2人报名相同位置的概率为（    ）。","options":{"A":"\u003cimg data-k=\"5ef3a129e326\">","B":"\u003cimg data-k=\"54d707f15b45\">","C":"\u003cimg data-k=\"ff1b1de9ab8e\">","D":"\u003cimg data-k=\"170ce8fc8ae0\">"},"answer":"C","explanation":"方法一：在报名人员中随机抽取2人，总的情况数有\u003cimg data-k=\"f212cd983b97\">种。2人报名相同位置有两种情况：\n①2人都报名击球手，情况数为\u003cimg data-k=\"ee574a16c810\">\u003cimg data-k=\"ce3be1bd31ff\">种；\n②2人都报名投球手，情况数为\u003cimg data-k=\"e31e7ef1fb8d\">种，但其中抽取的2人均是既报名击球手又报名投球手的情况重复出现1次，故满足条件的情况数为21+10-1=30种。\n根据公式：概率\u003cimg data-k=\"131749f3a1af\">，则所求概率为\u003cimg data-k=\"26a2a81af34f\">。\n方法二：在报名人员中随机抽取2人，总的情况数有\u003cimg data-k=\"f212cd983b97\">种。要求抽取的2人报名相同位置，则反面情况为抽取的2人报名不同位置，只能为其中一人只报名击球手，另一人只报名投球手，情况数为\u003cimg data-k=\"e51fe50e1f30\">种。根据公式：概率\u003cimg data-k=\"131749f3a1af\">，则所求概率=1-反面情况概率\u003cimg data-k=\"23cd18e84454\">。\n故正确答案为C。","no":34,"missingImage":false},{"type":"question","qid":"12882022","cat":"数学运算","stem":"甲乙两人参加200米趣味接力比赛，乙在100米处等待接力。假设甲乙起跑后都做加速度为\u003cimg data-k=\"b3d8d6d9aa90\">的匀加速运动，达到最高速度后保持匀速运动，已知甲乙的最高速度分别为8m/s和10m/s，为取得最好成绩，乙需要在距离甲多少米时起跑？","options":{"A":"14","B":"15","C":"16","D":"17"},"answer":"C","explanation":"根据题干可知，乙最快速度&gt;甲最快速度，若要取得最好成绩，则让乙尽量用超过甲的速度多跑，即甲乙交接时乙的速度=甲的最高速度=8m/s。根据加速度公式：\u003cimg data-k=\"7f1f65595cc7\">，则乙从速度0到8m/s用了\u003cimg data-k=\"52891e3eee92\">。根据匀加速直线运动的位移公式为：\u003cimg data-k=\"75f3e5e5faf1\">，则乙从速度0到8m/s一共跑了\u003cimg data-k=\"ccac534b1e46\">米，这4s内，甲跑了8×4=32米。则甲追乙的距离=32-16=16米，即乙需要在距离甲16米时起跑。\n故正确答案为C。\n备注:跑道宽度一般不适合两名队员并排跑，若按照乙加速到10m/s再接棒来解题，会形成在接力区内你追我赶反复超越的局面，与接力赛跑的现实情况严重不符。","no":35,"missingImage":false},{"type":"question","qid":"12882025","cat":"数学运算","stem":"今年甲和乙的年龄和为26岁，5年后甲的年龄是乙的3倍。若干年后，甲的年龄是乙的2倍，则此时乙的年龄为（    ）。","options":{"A":"12岁","B":"16岁","C":"18岁","D":"20岁"},"answer":"C","explanation":"方法一：设5年后乙的年龄为x岁，则甲的年龄为3x岁。根据“今年甲和乙的年龄和为26岁”可列式：（3x-5）+（x-5）=26，解得x=9，即5年后乙的年龄为9岁，甲的年龄为3×9=27岁，则甲、乙两人的年龄差为27-9=18岁。根据“若干年后，甲的年龄是乙的2倍”，即若干年后甲的年龄=2×乙的年龄，则此时年龄差=甲的年龄-乙的年龄=乙的年龄。根据年龄差不变， 乙的年龄=年龄差=18，即此时乙的年龄为18岁。\n方法二：年龄问题，考虑用代入排除法解题，设n年后，甲的年龄是乙的2倍。\n代入A项：n年后，乙的年龄为12岁，则甲的年龄为12×2=24岁，此时年龄和为12+24=36岁，比今年年龄和大36-26=10岁，n=10÷2=5年，不满足题干条件“5年后甲的年龄是乙的3倍”,排除;\n代入B项：n年后，乙的年龄为16岁，则甲的年龄为16×2=32岁，此时年龄和为16+32=48岁，比今年年龄和大48-26=22岁，n=22÷2=11年，则今年甲的年龄为32-11=21岁，乙的年龄为16-11=5岁，5年后甲的年龄为21+5=26岁，乙的年龄为5+5=10岁，\u003cimg data-k=\"c00690072690\">倍，不满足题干条件“5年后甲的年龄是乙的3倍”，排除;\n代入C项：n年后，乙的年龄为18岁，则甲的年龄为18×2=36岁，此时年龄和为18+36=54岁，比今年年龄和大54-26=28岁，n=28÷2=14年，则今年甲的年龄为36-14=22岁，乙的年龄为18-14=4岁，5年后甲的年龄为22+5=27岁，乙的年龄为4+5=9岁，27÷9=3倍，满足题干所有条件，当选。\n故正确答案为C。","no":36,"missingImage":false},{"type":"question","qid":"12882031","cat":"数学运算","stem":"某绿色有机农场把61600平方米耕地划分为玉米、大豆、稻谷三个作物区，玉米和大豆的面积比是7：2，大豆和稻谷的面积比是6：1，则玉米的面积是多少平方米？","options":{"A":"46200","B":"47200","C":"48200","D":"49200"},"answer":"A","explanation":"方法一：根据题意可知，\u003cimg data-k=\"43d36b1af7c7\">\u003cimg data-k=\"443c204aea68\">，\u003cimg data-k=\"1d126bb70383\">。则玉米、大豆、稻谷三者的面积之比为21：6：1，故玉米的面积\u003cimg data-k=\"1db4c9dd8d56\">平方米。\n方法二：根据题意可知，\u003cimg data-k=\"2029f00e4086\">，则玉米的面积应为7的倍数，只有A项满足条件。\n故正确答案为A。","no":37,"missingImage":false},{"type":"question","qid":"13504578","cat":"数学运算","stem":"九位裁判给一个选手打分，都打整数分，计算成绩时，去掉一个最高分和一个最低分，用四舍五入法，精确到一位小数，平均得分9.4分。若要精确到两位小数，则该选手的平均得分为：","options":{"A":"9.41分","B":"9.42分","C":"9.43分","D":"9.44分"},"answer":"C","explanation":"九位裁判打分，去掉一个最高分和一个最低分，通过四舍五入法精确到一位小数，平均得分9.4分，可知此时的平均分如果精确到两位小数应为9.35~9.44分，即剩余的七位裁判总分为65.45~66.08分，根据“裁判都打整数分”，则剩下七位裁判打的总分为整数，只能为66分。因此，若要精确到两位小数，则该选手的平均分为\u003cimg data-k=\"cfd28654cbe7\">分。\n故正确答案为C。","no":38,"missingImage":false},{"type":"question","qid":"13504580","cat":"数学运算","stem":"某工程项目要招聘100名甲乙两个岗位的工人，月工资分别为3000元和4000元，且招聘的乙岗位工人数不少于甲岗位的2倍。为使月付工资最少，则甲乙两个岗位招聘工人数分别为：","options":{"A":"31人，69人","B":"32人，68人","C":"33人，67人","D":"34人，66人"},"answer":"C","explanation":"代入A项：甲岗位31人，乙岗位69人，则月付工资为3000×31+4000×69=369000元；\n代入B项：甲岗位32人，乙岗位68人，则月付工资为3000×32+4000×68=368000元；\n代入C项：甲岗位33人，乙岗位67人，则月付工资为3000×33+4000×67=367000元；\n因为66&lt;2×34，不满于乙岗位工人数不少于甲岗位的2倍，排除D项。\n综上，月份工资最少的为C项。\n故正确答案为C。","no":39,"missingImage":false},{"type":"question","qid":"13504587","cat":"数学运算","stem":"一个空的倒置的圆锥形容器，倒入1瓶固定容量的水后，水的高度恰好为容器高度的一半。若要使容器盛满水，则需要再倒入水的瓶数为：","options":{"A":"5瓶","B":"7瓶","C":"8瓶","D":"10瓶"},"answer":"B","explanation":"根据几何等比例放缩性质，在立体几何中，体积比等于相似比的立方。因圆锥形容器倒置底部朝上，且“水的高度恰好为容器高度的一半”，则\u003cimg data-k=\"aa546d6dc16d\">，即相似比为1：2，则\u003cimg data-k=\"f8ac20620f9b\">。因容器内现装有1瓶容量的水，则装满容器需要8瓶水，需要再倒入水的瓶数为8-1=7瓶。\n故正确答案为B。","no":40,"missingImage":false}],"count":10,"answerable":10,"pointsOf":12},{"label":"判断推理","items":[{"type":"question","qid":"13504585","cat":"图形推理","stem":"从所给的四个选项中，选择最合适的一个填入问号处，使之呈现一定的规律性：\n\u003cimg data-k=\"471d10c770c3\" style=\"max-width:400px\">","options":{"A":"A","B":"B","C":"C","D":"D"},"answer":"C","explanation":"元素组成相似，优先考虑样式规律。题干图形轮廓和分割区域相同，且黑块数量不成规律，考虑黑白运算。九宫格优先看横行，前两行图形的运算规律为：黑+黑=白，白+白=白，黑+白=黑，白+黑=黑；第三行应用此规律，只有C项符合。\n故正确答案为C。","no":41,"missingImage":false},{"type":"question","qid":"12882218","cat":"图形推理","stem":"从所给的四个选项中，选择最合适的一个填入问号处，使之呈现一定的规律性：\n\u003cimg data-k=\"c0ef1002e481\" style=\"max-width:583px\">","options":{"A":"A","B":"B","C":"C","D":"D"},"answer":"A","explanation":"观察发现，题干图形中黑块先依次顺时针平移一格，再于平移所得顺时针方向最前面的黑块前新增一个黑块，故问号处应在第五幅图的基础上，黑块顺时针平移一格，再于平移所得顺时针方向最前面的黑块前新增一个黑块，只有A项符合。\n故正确答案为A。","no":42,"missingImage":false},{"type":"question","qid":"13504592","cat":"图形推理","stem":"把下面的六个图形分为两类，使每一类图形都有各自的共同特征或规律，分类正确的一项是：\n\u003cimg data-k=\"a475c0e431cd\" style=\"max-width:500px\">","options":{"A":"①②③，④⑤⑥","B":"①③⑤，②④⑥","C":"①③⑥，②④⑤","D":"①④⑥，②③⑤"},"answer":"C","explanation":"解法一：本题为分组分类题目。元素组成不同，考虑数量规律。题干出现“日”字和“田”字变形图，优先考虑笔画数。观察发现，图①③⑥均为一笔画，图②④⑤均为多笔画，故图①③⑥为一组，图②④⑤为一组。\n解法二：本题为分组分类题目。元素组成不同，优先考虑属性规律。观察发现，图①③⑥均为全直线的图形，图②④⑤均为含有曲线的图形，故图①③⑥为一组，图②④⑤为一组。\n故正确答案为C。","no":43,"missingImage":false},{"type":"question","qid":"13504598","cat":"图形推理","stem":"从所给的四个选项中，选择最合适的一个填入问号处，使之呈现一定的规律性：\n\u003cimg data-k=\"031211a4b5d7\" style=\"max-width:400px\">","options":{"A":"A","B":"B","C":"C","D":"D"},"answer":"B","explanation":"元素组成不同，且无明显属性规律，考虑数量规律。九宫格优先看横行，观察发现，第一行图形直线数依次为3、2、1，第二行图形面数量依次为3、2、1，第三行的第一幅图和第三幅图的交点数分别为3和1，故？处应选择交点数为2的图形，只有B项符合。\n故正确答案为B。","no":44,"missingImage":false},{"type":"question","qid":"12882220","cat":"图形推理","stem":"以下为立方体的外表面，下列哪个立方体可以由此折成（    ）。\n\u003cimg data-k=\"22785365e55f\" style=\"max-width:687px\">","options":{"A":"A","B":"B","C":"C","D":"D"},"answer":"A","explanation":"本题为空间重构题，对展开图进行编号，如下图所示：\n\u003cimg data-k=\"b71179c0f726\" style=\"max-width:690px\">\nA项：选项由面e、面h和面i构成，选项与展开图一致，当选；\nB项：选项由面g、面h和面i构成，展开图中面g和面i为相对面，相对面不能同时出现，选项与展开图不一致，排除；\nC项：选项中存在两个空白面，而展开图中只有一个空白面，选项与展开图不一致，排除；\nD项：选项由面f、面g和面h构成，展开图中面f和面h为相对面，相对面不能同时出现，选项与展开图不一致，排除。\n故正确答案为A。","no":45,"missingImage":false},{"type":"question","qid":"13504591","cat":"图形推理","stem":"从所给的四个选项中，选择最合适的一个填入问号处，使之呈现一定的规律性：\n\u003cimg data-k=\"5e95001e11c6\" style=\"max-width:400px\">","options":{"A":"A","B":"B","C":"C","D":"D"},"answer":"D","explanation":"元素组成相似，且相同元素重复出现，优先考虑样式规律中的遍历。九宫格优先看横行，观察发现，第一行图形中，圆形内部的空白、斜线和“十”字各出现一次，圆形外部的小圆、三角形和矩形各出现一次；经验证，第二行符合此规律；第三行应用此规律，故？处图形圆形内部应为“十”字，圆形外部应为三角形，但据此无法排除选项。继续观察发现，题干图形圆形外部小元素的位置不同，第一行图形中，圆形外部小元素依次顺时针移动\u003cimg data-k=\"62886ffdfcd1\">个圆；经验证，第二行符合此规律；第三行应用此规律，故？处图形圆形外部的三角形应位于圆形的左侧，只有D项符合。\n故正确答案为D。","no":46,"missingImage":false},{"type":"question","qid":"13504600","cat":"图形推理","stem":"从所给的四个选项中，选择最合适的一个填入问号处，使之呈现一定的规律性：\n\u003cimg data-k=\"69e54fdf96da\" style=\"max-width:600px\">","options":{"A":"A","B":"B","C":"C","D":"D"},"answer":"A","explanation":"元素组成不同，且无明显属性规律，考虑数量规律。题干图形均由边数相同的多边形元素构成，观察发现，每幅图中这些相同的多边形元素依次仅为八边形、七边形、六边形、五边形、四边形、？，因此构成问号处图形的多边形元素应仅为三角形，只有A项符合。\n故正确答案为A。","no":47,"missingImage":false},{"type":"question","qid":"13504594","cat":"图形推理","stem":"从所给的四个选项中，选择最合适的一个填入问号处，使之呈现一定的规律性：\n\u003cimg data-k=\"3ff7182f2395\" style=\"max-width:400px\">","options":{"A":"A","B":"B","C":"C","D":"D"},"answer":"B","explanation":"本题考查三视图。九宫格横向看无规律，考虑纵向看。观察发现，第一列的图2和图3依次是图1的主视图和俯视图；经验证，第二列满足此规律；第三列应用规律，故？处应选择图1的俯视图，只有B项符合。\n故正确答案为B。","no":48,"missingImage":false},{"type":"question","qid":"13504597","cat":"定义判断","stem":"构性关系是指物质的结构与性质之间的本质关系。构性关系是材料科学研究的核心内容之一，它涉及材料的化学组成、晶体结构、微观组织等结构特征与其物理、化学、力学等性能之间的关系。\n根据上述定义，下列没有涉及构性关系的是：","options":{"A":"聚苯乙烯的分子链的主链呈刚性或侧基位阻较大使得单键旋转困难，材料加工成型后一般表现为无定形态，具有较好的透光性","B":"通过对烷烃、环烷烃等177个有机化合物的研究发现，分子的几何形状对其粘度有一定影响，但是影响不是很大","C":"比较几种乙烯砜型活性染料发现，当染料分子体系中位于苯环或萘环一侧的供电基供电子能力较强、另一侧的吸电基吸电子能力较强时，其水解反应速率较大","D":"金刚石、碳化硅和晶体硅都是原子晶体，相邻原子间通过共价键形成立体网状结构，它们的结构相似，但是原子晶体的半径、键长和键能却不相同"},"answer":"D","explanation":"第一步：找出定义关键词。\n“物质的结构与性质之间的本质关系”、“涉及材料的化学组成、晶体结构、微观组织等结构特征与其物理、化学、力学等性能之间的关系”。\n第二步：逐一分析选项。\nA项：聚苯乙烯分子链的结构特征导致聚苯乙烯加工成型后一般表现为无定形态、透光性较好，体现了聚苯乙烯的结构特征和其性能的关系，符合“物质的结构与性质之间的本质关系”、“涉及材料的化学组成、晶体结构、微观组织等结构特征与其物理、化学、力学等性能之间的关系”，符合定义，排除；\nB项：通过对有机化合物的研究发现，分子的几何形状对其粘度有一定影响，体现了分子的形状和其性能的关系，符合“物质的结构与性质之间的本质关系”、“涉及材料的化学组成、晶体结构、微观组织等结构特征与其物理、化学、力学等性能之间的关系”，符合定义，排除；\nC项：比较乙烯砜型活性染料发现，分子体系中供电基、吸电基能力均较强时，水解反应速率大，说明染料分子的结构特征会影响其水解反应速率，体现了乙烯砜型活性染料的结构特征和其性能的关系，符合“物质的结构与性质之间的本质关系”、“涉及材料的化学组成、晶体结构、微观组织等结构特征与其物理、化学、力学等性能之间的关系”，符合定义，排除；\nD项：金刚石、碳化硅和晶体硅都是原子晶体，它们的结构相似，但是半径、键长和键能却不相同，没有提到它们的结构特征与性能之间的关系，不符合“物质的结构与性质之间的本质关系”、“涉及材料的化学组成、晶体结构、微观组织等结构特征与其物理、化学、力学等性能之间的关系”，不符合定义，当选。\n本题为选非题，故正确答案为D。","no":49,"missingImage":false},{"type":"question","qid":"13504636","cat":"定义判断","stem":"反事实思维是指在心理上对过去已经发生的事实进行否定，进而建构一种新的可能性假设的思维活动。反事实思维在头脑中主要以条件命题的形式来表征，包括前提（例：我要拿把伞）和结论（例：今天就不会淋雨了）两部分。反事实思维分为三种结构：（1）加法式，在前提中添加事实上未发生的事件或未采取的行动而对事实进行否定和重建；（2）减法式，假定某个既定事件并没有发生，从而对事实进行否定和重建；（3）替代式，假定在前提中发生的是另一个事件，从而对事实进行否定和重建。\n根据上述定义，下列对应正确的是：","options":{"A":"如果我多加小心，就不会上当———（2）","B":"如果我不是多买了点食物，我们几个就不够吃了———（1）","C":"如果我面对工作中的困难没有退缩的话，今天在事业上也能取得成绩———（1）","D":"如果我平时好好学习而不是只顾着玩的话，这次考试就能取得高分了———（3）"},"answer":"D","explanation":"第一步：找出定义关键词。\n反事实思维：“对过去已经发生的事实进行否定”、“新的可能性假设”、“包括前提和结论”；\n（1）加法式：“添加事实上未发生的事件或未采取的行动”；\n（2）减法式：“假定某个既定事件并没有发生”；\n（3）替代式：“假定在前提中发生的是另一个事件”。\n第二步：逐一分析选项。\nA项：前提为“如果我多加小心”，说明事实上没有小心，是在原有事实的基础上“添加事实上未发生的事件或未采取的行动”，不符合“假定某个既定事件并没有发生”，不符合“（2）减法式”定义，排除；\nB项：前提为“如果我不是多买了点食物”，说明事实上是多买了食物的，符合“假定某个既定事件并没有发生”，不符合“添加事实上未发生的事件或未采取的行动”，不符合“（1）加法式”定义，排除；\nC项：前提为“如果我面对工作中的困难没有退缩的话”，说明事实上是退缩了的，符合“假定某个既定事件并没有发生”，不符合“添加事实上未发生的事件或未采取的行动”，不符合“（1）加法式”定义，排除；\nD项：前提为“如果我平时好好学习而不是只顾着玩的话”，说明事实上是只顾着玩，而提出的“平时好好学习”是另一个事件，符合“假定在前提中发生的是另一个事件”，符合“（3）替代式”定义，当选。\n故正确答案为D。","no":50,"missingImage":false},{"type":"question","qid":"12882032","cat":"定义判断","stem":"文献自引率是指期刊自引次数占其所引用的参考文献次数的比例。文献自被引率是指期刊被自己引用的次数占其被引用总数的比例。根据上述定义，如果某学术期刊共引用了1000个参考文献，其中200个来自该期刊以往刊载过的论文，同时该期刊论文一共被引用了1500次，则以下说法正确的是：","options":{"A":"该学术期刊自引次数和自被引次数一样","B":"该期刊的文献自引率为13.3%，文献自被引率为20%","C":"学术期刊文献自引率一定小于文献自被引率","D":"文献自引率和文献自被引率都能准确衡量文献的质量"},"answer":"A","explanation":"第一步：找出定义关键词。\n文献自引率：“自引次数占其所引用的参考文献次数的比例”；\n文献自被引率：“被自己引用的次数占其被引用总数的比例”。\n第二步：逐一分析选项。\nA项：该期刊所引用的文献中，200个来自该期刊以往刊载过的论文，自引次数和自被引次数都为200，说法正确，当选；\nB项：该期刊文献自引率\u003cimg data-k=\"eb6aaad15a2c\">；该期刊文献自被引率\u003cimg data-k=\"bc57e44f081e\">，选项二者顺序相反，说法不正确，排除；\nC项：根据二者的公式，分子分母的数量并不确定，所以并不能绝对说明二者的大小；且根据该期刊的情况，文献自引率是可以大于文献自被引率，说法不正确，排除；\nD项：二者都是在说引用的情况，并不能直接和文献质量挂钩，说法不正确，排除。\n故正确答案为A。","no":51,"missingImage":false},{"type":"question","qid":"12882034","cat":"定义判断","stem":"水体自净是指受污染的水体，在物理、化学、生物等作用下，污染物浓度逐渐降低，经一段时间后自行恢复到受污染前的状态。\n根据上述定义，下列不属于水体自净的是：","options":{"A":"污水或污染物被排入水体后，悬浮体、胶体和溶解性污染物因混合稀释而逐渐降低浓度","B":"当受污染的水体中含有可溶的二价铁时，向水体中加入化学制剂，将其转化为不溶性的三价铁而沉淀到水底","C":"水体中的硅、铝氧化物胶体或蒙脱土、高岭土一类胶体物质，能吸附各种阳离子或阴离子而与污染物凝聚并沉淀","D":"悬浮和溶解于水体中的有机污染物被水体中微生物利用，进一步分解为二氧化碳和水"},"answer":"B","explanation":"第一步：找出定义关键词。\n“受污染的水体”、“物理、化学、生物等作用下”、“污染物浓度逐渐降低”、“自行恢复到受污染前的状态”。\n第二步：逐一分析选项。\nA项：“污水或污染物”符合“受污染的水体”，“因混合稀释”符合“物理、化学、生物等作用下”，“逐渐降低浓度”符合“污染物浓度逐渐降低”，符合定义，排除；\nB项：“向水体中加入化学制剂”是人为加入，不是自行恢复，不符合“自行恢复到受污染前的状态”，不符合定义，当选；\nC项：水体中的物质可以吸附离子，与污染物凝聚，符合“物理、化学、生物等作用下”、“污染物浓度逐渐降低”，符合定义，排除；\nD项：“有机污染物被水体中微生物利用”符合“受污染的水体”、“物理、化学、生物等作用下”，“分解为二氧化碳和水”符合“污染物浓度逐渐降低”、“自行恢复到受污染前的状态”，符合定义，排除。\n本题为选非题，故正确答案为B。","no":52,"missingImage":false},{"type":"question","qid":"13504604","cat":"定义判断","stem":"按照运输支出与运输量的关系，运输成本可分为运输可变成本和运输固定成本。运输可变成本是指随运输量的变化而变动的成本；运输固定成本是指短期内不随运输量变化而变动的成本。\n根据上述定义，下列属于运输固定成本的是：","options":{"A":"运输车辆燃油费用","B":"运输车辆车库建设费用","C":"运输车辆损耗费用","D":"运输工具路桥通行费用"},"answer":"B","explanation":"第一步：找出定义关键词。\n运输可变成本：“随运输量的变化而变动的成本”；\n运输固定成本：“短期内不随运输量变化而变动的成本”。\n第二步：逐一分析选项。\nA项：随着运输数量的增加，车辆的燃油量会增加，车辆的燃油费用也会随之增加，不符合“短期内不随运输量变化而变动的成本”，不符合运输固定成本的定义，排除；\nB项：车库的建设费用主要取决于车库的面积大小，和车辆的运输数量无关，符合“短期内不随运输量变化而变动的成本”，符合运输固定成本的定义，当选；\nC项：随着运输数量的增加，车辆的损耗会增加，车辆损耗费用也会随之增加，不符合“短期内不随运输量变化而变动的成本”，不符合运输固定成本的定义，排除；\nD项：随着运输数量的增加，车辆通过路桥次数会增多，通过路桥的费用也会随之增加，不符合“短期内不随运输量变化而变动的成本”，不符合运输固定成本的定义，排除。\n故正确答案为B。","no":53,"missingImage":false},{"type":"question","qid":"13504609","cat":"定义判断","stem":"公共产品是一种具有非竞争性和非排他性的产品，也即一个人享有这种产品的好处时并不会减少其他人对它们的享有，同时一个人享有公共产品的好处时也不会排除其他人享有它们的好处。\n根据上述定义，下列属于公共产品的是：","options":{"A":"电视新闻节目","B":"公共图书馆的图书","C":"公共停车场","D":"公立医院的医疗"},"answer":"A","explanation":"第一步：找出定义关键词。\n“具有非竞争性和非排他性”、“一个人享有这种产品的好处时并不会减少其他人对它们的享有，同时一个人享有公共产品的好处时也不会排除其他人享有它们的好处”。\n第二步：逐一分析选项。\nA项：电视新闻节目不会因为一个人的观看而减少其他人观看的机会，具有非竞争性和非排他性，符合“具有非竞争性和非排他性”、“一个人享有这种产品的好处时并不会减少其他人对它们的享有，同时一个人享有公共产品的好处时也不会排除其他人享有它们的好处”，符合定义，当选；\nB项：公共图书馆的图书会因为一个人的借阅而减少他人借阅的可能性，具有排他性，不符合“具有非竞争性和非排他性”、“一个人享有这种产品的好处时并不会减少其他人对它们的享有，同时一个人享有公共产品的好处时也不会排除其他人享有它们的好处”，不符合定义，排除；\nC项：公共停车场停车的车位是有限的，一个人占用某个停车位可能会使得他人无法停车，具有排他性，不符合“具有非竞争性和非排他性”、“一个人享有这种产品的好处时并不会减少其他人对它们的享有，同时一个人享有公共产品的好处时也不会排除其他人享有它们的好处”，不符合定义，排除；\nD项：公立医院的医疗资源是有限的，一个人占用某种医疗资源会影响他人的使用，不符合“具有非竞争性和非排他性”、“一个人享有这种产品的好处时并不会减少其他人对它们的享有，同时一个人享有公共产品的好处时也不会排除其他人享有它们的好处”，不符合定义，排除。\n故正确答案为A。","no":54,"missingImage":false},{"type":"question","qid":"13504605","cat":"定义判断","stem":"艺术考辨是对艺术作品、艺术文献的考察辨证，即指充分根据资料来考核、证实和说明与艺术相关的问题，经常运用于艺术品真伪、年代、作者、内容、流传等的鉴别，出土文物的断代、文化归属等考证，以及艺术文献的考订和艺术事件的考察等。\n根据上述定义，下列属于艺术考辨的是：","options":{"A":"某文物鉴定专家使用手持式显微镜发现某件明代瓷器表面有漏釉和伤釉的现象","B":"某书画鉴定专家根据多年的鉴定经验，一眼便看出一幅落款为张大千的画作为赝品","C":"研究人员通过翻阅大量文献，认为某书画著录并非唐代所作，而是明清时期的伪书","D":"某收藏者一直珍藏着某位近代雕塑大师的一件作品，他认为根据市场价格的波动，这件作品目前已价值百万"},"answer":"C","explanation":"第一步：找出定义关键词。\n“充分根据资料”、“经常运用于艺术品真伪、年代、作者、内容、流传等的鉴别，出土文物的断代、文化归属等考证，以及艺术文献的考订和艺术事件的考察”。\n第二步：逐一分析选项。\nA项：某文物鉴定专家使用手持式显微镜，不符合“充分根据资料”，发现瓷器表面有漏釉和伤釉的现象，不符合“经常运用于艺术品真伪、年代、作者、内容、流传等的鉴别，出土文物的断代、文化归属等考证，以及艺术文献的考订和艺术事件的考察”，不符合定义，排除；\nB项：某书画鉴定专家根据多年的鉴定经验看出一幅落款为张大千的画作为赝品，方式为多年的经验，不符合“充分根据资料”，不符合定义，排除；\nC项：研究人员通过翻阅大量文献，符合“充分根据资料”，认为某书画是明清时期的伪书，符合“经常运用于艺术品真伪、年代、作者、内容、流传等的鉴别，出土文物的断代、文化归属等考证，以及艺术文献的考订和艺术事件的考察”，符合定义，当选；\nD项：某收藏者认为根据市场价格的波动，这件近代雕塑大师的作品目前已价值百万，依据为市场价格，不符合“充分根据资料”，结论为作品的价格，不符合“经常运用于艺术品真伪、年代、作者、内容、流传等的鉴别，出土文物的断代、文化归属等考证，以及艺术文献的考订和艺术事件的考察”，不符合定义，排除。\n故正确答案为C。","no":55,"missingImage":false},{"type":"question","qid":"13504596","cat":"定义判断","stem":"条块关系是指在中国行政组织体系中，中央的各个职能部门及其所属的地区机构系统与各级地方政府系统相互之间的基本结构性关系。条块是在中央最高领导层之下设立的两套平行的行政系统。其中，条是指中央的各个职能部门及其所属的地区机构；块是由不同职能部门组合而成的各级地方政府。条块关系主要有以下3个层面：（1）上级条条与下级块块关系；（2）上下级条条关系；（3）上下级块块关系。\n根据上述定义，下列对应正确的是：","options":{"A":"科技部与科技厅的关系——（1）","B":"县政府与乡政府的关系——（3）","C":"教育部与省政府的关系——（2）","D":"省政府与司法厅的关系——（1）"},"answer":"B","explanation":"第一步：找出定义关键词。\n条块关系：“中国行政组织体系中”、“中央的各个职能部门及其所属的地区机构系统与各级地方政府系统相互之间的基本结构性关系”；\n条块：“在中央最高领导层之下设立的两套平行的行政系统”；\n条：“中央的各个职能部门及其所属的地区机构”；\n块：“由不同职能部门组合而成的各级地方政府”。\n条块关系的3个层面：（1）上级条条与下级块块关系；（2）上下级条条关系；（3）上下级块块关系。\n第二步：逐一分析选项。\nA项：科技部是中央的职能部门，科技厅是其所属的地区机构，符合“上下级条条关系”，对应（2），不对应（1），对应错误，排除；\nB项：县政府和乡政府都是地方政府，符合“上下级块块关系”，对应（3），对应正确，当选；\nC项：教育部是中央职能部门，省政府是地方政府，符合“上级条条与下级块块关系”，对应（1），不对应（2），对应错误，排除；\nD项：省政府是地方政府，司法厅是省级政府的职能部门，不符合“上级条条与下级块块关系”，不对应（1），对应错误，排除。\n故正确答案为B。","no":56,"missingImage":false},{"type":"question","qid":"13504625","cat":"定义判断","stem":"缩喻是比喻的一种，是指喻词不出现，本体与喻体以修饰或并列的形式出现的一种修辞方式。从语法结构来看，缩喻主要有两种形式：（1）偏正式：喻体修饰本体；（2）并列式：喻体与本体形成并列关系。\n根据上述定义，下列属于偏正式缩喻的是：","options":{"A":"黄金季节","B":"人高马大","C":"祖国母亲","D":"弯弯的月儿小小的船"},"answer":"A","explanation":"第一步：找出定义关键词。\n缩喻：“喻词不出现，本体与喻体以修饰或并列的形式出现”；\n偏正式缩喻：“喻体修饰本体”；\n并列式缩喻：“喻体与本体形成并列关系”。\n第二步：逐一分析选项。\nA项：“黄金季节”比喻像黄金一样宝贵的时间段，其中“黄金”是喻体，“季节”是本体，“黄金”修饰“季节”，符合“喻体修饰本体”，符合偏正式缩喻定义，当选；\nB项：“人高马大”比喻人生得高大壮实身材魁梧，其中“人高”指的是个子高挑，“马大”则用马的高大雄壮来比喻人身材的高挑魁梧，“人高”是本体，“马大”是喻体，但“马大”不修饰“人高”，不符合“喻体修饰本体”，不符合偏正式缩喻定义，排除；\nC项：“祖国母亲”中，“祖国”是本体，“母亲”是喻体，但“母亲”不修饰“祖国”，不符合“喻体修饰本体”，不符合偏正式缩喻定义，排除；\nD项：“弯弯的月儿小小的船”中，“弯弯的月儿”是本体，“小小的船”是喻体，但“小小的船”不修饰“弯弯的月儿”，不符合“喻体修饰本体”，不符合偏正式缩喻定义，排除。\n故正确答案为A。","no":57,"missingImage":false},{"type":"question","qid":"13504629","cat":"定义判断","stem":"共同海损是海商法中最古老并适用至今的法律制度之一，是指在船舶、货物和其他财产遭遇共同危险时，为了共同的安全，主动采取抢救措施所造成的新的损失，由因采取该措施而获救的财产的受益各方，在航程结束时共同分摊。共同海损的成立必须具备以下要件：（1）海上危险必须是危及船方与货方共同利益而且是真实的危险；（2）共同海损措施必须是有意的、合理的、有效的；（3）共同海损的损失必须是由共同海损措施所直接造成的。\n根据上述定义，下列属于共同海损的是：","options":{"A":"由于驾驶人员的疏忽致使船舶搁浅，船底受损","B":"为免受海盗侵袭，重金聘请安保船只与货船伴行","C":"海上起风浪时，堆积在甲板上的货物被海浪卷入海中","D":"船舶触礁后为减轻船舶载重，将部分货物抛入海中"},"answer":"D","explanation":"第一步：找出定义关键词。\n“船舶、货物和其他财产遭遇共同危险时”、“为了共同的安全，主动采取抢救措施所造成的新的损失”、“危险必须是危及船方与货方共同利益而且是真实的危险”、“措施必须是有意的、合理的、有效的”、“损失必须是由共同海损措施所直接造成”。\n第二步：逐一分析选项。\nA项：驾驶人员的疏忽致使船舶搁浅，此时船底受损是由于驾驶人员的粗心大意，不符合“船舶、货物和其他财产遭遇共同危险时”、“为了共同的安全，主动采取抢救措施所造成的新的损失”、“损失必须是由共同海损措施所直接造成”，不符合定义，排除；\nB项：重金聘请安保船只与货船伴行以避免海盗侵袭，此时海盗的侵扰并未发生，不符合“船舶、货物和其他财产遭遇共同危险时”、“危险必须是危及船方与货方共同利益而且是真实的危险”，不符合定义，排除；\nC项：堆积在甲板上的货物被海浪卷入海中，货物损失是风浪造成的，而非人员操作所致，不符合“为了共同的安全，主动采取抢救措施所造成的新的损失”，不符合定义，排除；\nD项：船舶触礁说明船舶在行驶过程中已经遇到危害共同利益的危险，符合“船舶、货物和其他财产遭遇共同危险时”、“危险必须是危及船方与货方共同利益而且是真实的危险”，将部分货物抛入海中是船员主动采取的行动，符合“为了共同的安全，主动采取抢救措施所造成的新的损失”，将部分货物抛入海中是为了减轻船舶载重，从而避免更大的损失，符合“措施必须是有意的、合理的、有效的”、“损失必须是由共同海损措施所直接造成”，符合定义，当选。\n故正确答案为D。","no":58,"missingImage":false},{"type":"question","qid":"13504603","cat":"类比推理","stem":"是古：非今","options":{"A":"品头：论足","B":"挑肥：拣瘦","C":"拾遗：补缺","D":"抓大：放小"},"answer":"D","explanation":"第一步：判断题干词语间逻辑关系。\n“是古”与“非今”的单字反义关系明显，故优先考虑词语拆分。“是”和“非”构成反义关系，“古”和“今”构成反义关系。\n第二步：判断选项词语间逻辑关系。\nA项：“品”指品味、鉴赏，“论”指议论，二者构成并列关系，不构成反义关系，“头”和“足”构成并列关系，不构成反义关系，与题干逻辑关系不一致，排除；\nB项：“挑”和“拣”都有挑挑拣拣的意思，二者构成近义关系，不构成反义关系，“肥”和“瘦”构成反义关系，与题干逻辑关系不一致，排除；\nC项：“拾”指捡取，“补”指弥补，二者不构成反义关系，“遗”指遗漏，“缺”指缺失，二者不构成反义关系，与题干逻辑关系不一致，排除；\nD项：“抓”指抓住，“放”指放开，二者构成反义关系，“大”和“小”构成反义关系，与题干逻辑关系一致，当选。\n故正确答案为D。","no":59,"missingImage":false},{"type":"question","qid":"13504607","cat":"类比推理","stem":"白兰地：烟酒","options":{"A":"高铁：舟车","B":"鸟喙：花鸟","C":"黄桃：桃李","D":"漫步：行走"},"answer":"A","explanation":"第一步：判断题干词语间逻辑关系。\n白兰地是酒不是烟，与烟构成反向种属关系，与酒构成种属关系。\n第二步：判断选项词语间逻辑关系。\nA项：高铁是车不是舟，与舟构成反向种属关系，与车构成种属关系，与题干逻辑关系一致，当选；\nB项：鸟喙是鸟的组成部分，与鸟构成组成关系，与题干逻辑关系不一致，排除；\nC项：黄桃是桃不是李，与李构成反向种属关系，与桃构成种属关系，但顺序与题干相反，与题干逻辑关系不一致，排除；\nD项：漫步是一种行走方式，二者是种属关系，与题干逻辑关系不一致，排除。\n故正确答案为A。","no":60,"missingImage":false},{"type":"question","qid":"12882037","cat":"类比推理","stem":"自主学习：知识学习：技术学习","options":{"A":"插入页码：插入页眉：插入页脚","B":"手术治疗：局部麻醉：药物麻醉","C":"亲子沟通：语言沟通：手势沟通","D":"房屋租赁：直接租赁：短期租赁"},"answer":"C","explanation":"第一步：判断题干词语间逻辑关系。\n自主学习是按照学习主动性划分，而知识学习和技术学习是按照学习内容划分，与自主学习的划分标准不一致，知识学习和技术学习分别与自主学习构成交叉关系，二者构成并列关系。\n第二步：判断选项词语间逻辑关系。\nA项：插入页码、插入页眉、插入页脚三者均为Word操作的功能，三者为并列关系，与题干逻辑关系不一致，排除；\nB项：局部麻醉是按照麻醉作用部位划分的，药物麻醉是按照让人失去知觉的方式划分，二者划分标准不一致，为交叉关系，但都属于手术治疗的一个环节，分别与手术治疗构成组成关系，与题干逻辑关系不一致，排除；\nC项：亲子沟通是指家庭中父母、子女之间交换信息、观点、意见、情感和态度，以达到共同的了解、信任与互相合作的过程。语言沟通和手势沟通是按照沟通方式划分的沟通，与亲子沟通划分标准不一致，分别与亲子沟通构成交叉关系，二者是并列关系，与题干逻辑关系一致，当选；\nD项：房屋租赁是按照租赁内容划分的，直接租赁按照租赁形式划分，而短期租赁按照租赁时间划分，三者划分标准不一致，三者互为交叉关系，与题干逻辑关系不一致，排除。\n故正确答案为C。","no":61,"missingImage":false},{"type":"question","qid":"13504620","cat":"类比推理","stem":"明确招聘岗位：确定招聘渠道：招聘程序","options":{"A":"信件分拣：信件运输：信件邮递","B":"年终总结：工作回顾：反思不足","C":"偷换概念：自相矛盾：逻辑错误","D":"工程设计：工程施工：工程验收"},"answer":"A","explanation":"第一步：判断题干词语间逻辑关系。\n招聘程序包括明确招聘岗位和确定招聘渠道，前两个词与第三个词构成组成关系；且一般先明确招聘岗位，再确定招聘渠道，前两个词构成时间先后顺序的对应关系。\n第二步：判断选项词语间逻辑关系。\nA项：信件邮递过程包括信件分拣和信件运输，前两个词与第三个词构成组成关系；且一般先进行信件分拣，再进行信件运输，前两个词构成时间先后顺序的对应关系，与题干逻辑关系一致，当选；\nB项：年终总结包括工作回顾和反思不足，第一个词与后两个词构成组成关系，与题干逻辑关系不一致，排除；\nC项：偷换概念、自相矛盾都属于逻辑错误的类型，前两个词为并列关系，均与第三个词构成种属关系，与题干逻辑关系不一致，排除；\nD项：一般先进行工程设计，再进行工程施工，最后工程验收，三者构成时间先后顺序的对应关系，与题干逻辑关系不一致，排除。\n故正确答案为A。","no":62,"missingImage":false},{"type":"question","qid":"13504611","cat":"类比推理","stem":"专业：学位：学位证","options":{"A":"身份号码：登记日期：身份证","B":"所有权人：房屋坐落：房产证","C":"准驾车型：品牌型号：驾驶证","D":"健康状况：国籍信息：结婚证"},"answer":"B","explanation":"第一步：判断题干词语间逻辑关系。\n“学位证”可以反映出“专业”和“学位”两个信息，第三个词与前两个词均构成对应关系。\n第二步：判断选项词语间逻辑关系。\nA项：“身份证”可以反映出“身份号码”的信息，第三个词与第一个词构成对应关系，但“身份证”上只有“有效期限”的信息，并无“登记日期”的信息，第三个词与第二个词不构成对应关系，与题干逻辑关系不一致，排除；  \nB项：“房产证”可以反映出“所有权人”和“房屋坐落”两个信息，第三个词与前两个词均构成对应关系，与题干逻辑关系一致，当选； \nC项：“驾驶证”可以反映出“准驾车型”的信息，第三个词与第一个词构成对应关系，但“驾驶证”无法反映“品牌型号”的信息，第三个词与第二个词不构成对应关系，与题干逻辑关系不一致，排除；  \nD项：“结婚证”可以反映出“国籍信息”，第三个词与第二个词构成对应关系，但“结婚证”无法反映“健康状况”的信息，第三个词与第一个词不构成对应关系，与题干逻辑关系不一致，排除。\n故正确答案为B。","no":63,"missingImage":false},{"type":"question","qid":"12882035","cat":"类比推理","stem":"机械运动 对于 （    ） 相当于 民意调查 对于 （    ）","options":{"A":"直线运动；在线调查","B":"加速运动；问卷调查","C":"化学运动；连续调查","D":"物质运动；社会调查"},"answer":"D","explanation":"逐一代入选项。\nA项：机械运动指一个物体相对于另一个物体位置的变化，直线运动是一种机械运动，二者是种属关系；有的民意调查是在线调查，有的民意调查不是在线调查，有的在线调查是民意调查，有的在线调查不是民意调查，二者是交叉关系，前后逻辑关系不一致，排除；\nB项：机械运动指一个物体相对于另一个物体位置的变化，加速运动是一种机械运动，二者是种属关系；有的民意调查是问卷调查，有的民意调查不是问卷调查，有的问卷调查是民意调查，有的问卷调查不是民意调查，二者是交叉关系，前后逻辑关系不一致，排除；\nC项：物质运动有机械运动、物理运动、化学运动、生物运动和社会运动五种形式，机械运动与化学运动是并列关系；连续调查是随着被研究现象的发展变化连续地进行的登记调查，有的民意调查是连续调查，有的民意调查不是连续调查，有的连续调查是民意调查，有的连续调查不是民意调查，二者是交叉关系，前后逻辑关系不一致，排除；\nD项：物质运动有机械运动、物理运动、化学运动、生物运动和社会运动五种形式，机械运动是一种物质运动，二者是种属关系；民意调查是了解公众舆论倾向的一种社会调查，民意调查是一种社会调查，二者是种属关系，前后逻辑关系一致，当选。\n故正确答案为D。","no":64,"missingImage":false},{"type":"question","qid":"12882036","cat":"类比推理","stem":"购票：自助购票：窗口购票","options":{"A":"卖货：寄卖货物：赊卖货物","B":"灾害：抵御灾害：躲避灾害","C":"救助：提供现金：发放实物","D":"公司：银行贷款：股票筹资"},"answer":"C","explanation":"第一步：判断题干词语间逻辑关系。\n自助购票与窗口购票是两种不同的购票方式，二者为并列关系，与购票分别构成种属关系。\n第二步：判断选项词语间逻辑关系。\nA项：寄卖是指委托人将自己欲出售的物品交付受托人，让其按指定价格代为出售；赊卖是指买卖货物时，卖方延时收款，二者为交叉关系，与题干逻辑关系不一致，排除；\nB项：抵御灾害与躲避灾害是两种不同的防灾减灾方式，二者为并列关系，但与灾害不是种属关系，与题干逻辑关系不一致，排除；\nC项：提供现金、发放实物是两种不同的救助方式，二者为并列关系，与救助分别构成种属关系，与题干逻辑关系一致，当选；\nD项：银行贷款、股票筹资是两种不同的融资方式，二者为并列关系，但公司是银行贷款、股票筹资的主体，而非种属关系，与题干逻辑关系不一致，排除。\n故正确答案为C。","no":65,"missingImage":false},{"type":"question","qid":"13504615","cat":"逻辑判断","stem":"科学家通过整合数十年来对全球海洋的多次调查观测结果，并运用计算机进行气候变化模拟后发现，包含细菌和另一种单细胞生物“古生菌”的原核生物对气候变化的适应力最强。因此，原核生物有可能成为气候变化的赢家。\n以下哪项如果为真，最能削弱上述论证？","options":{"A":"原核生物在全球食物链中发挥着至关重要的作用","B":"海洋每变暖1摄氏度，其中的生物量将减少约1.5%","C":"原核生物在数周内就可以发展出使它们更容易生存的特征","D":"气候变化可能在以计算机模拟中没有捕捉到的方式在改变"},"answer":"D","explanation":"第一步：找出论点和论据。\n论点：原核生物有可能成为气候变化的赢家。\n论据：科学家通过整合数十年来对全球海洋的多次调查观测结果，并运用计算机进行气候变化模拟后发现，包含细菌和另一种单细胞生物“古生菌”的原核生物对气候变化的适应力最强。\n论点和论据讨论的都是原核生物对气候变化的适应能力，二者话题一致，考虑削弱论点或削弱论据。\n第二步：逐一分析选项。\nA项：指出原核生物在食物链中发挥着重要作用，与论点讨论的“气候变化”无关，话题不一致，不能削弱，排除；\nB项：指出海洋变暖会使生物量减少，但不明确气候变化是否使海洋变暖，也不明确减少的生物是否包括原核生物，不明确项，不能削弱，排除；\nC项：指出原核生物发展出更容易生存的特征的速度很快，说明原核生物确实有很强的适应能力，为加强项，无法削弱，排除；\nD项：指出气候变化可能在以计算机模拟中没有捕捉到的方式在改变，说明用计算机模拟气候变化可能并不准确，削弱论据，可以削弱，当选。\n故正确答案为D。","no":66,"missingImage":false},{"type":"question","qid":"12882217","cat":"类比推理","stem":"小张：我不是罪犯。\n小李：我们当中有人不是罪犯。\n小王：小李是罪犯。\n只有一个人说的是真话，那么可推出下列哪项（    ）。","options":{"A":"小张是罪犯","B":"小李是罪犯","C":"小王是罪犯","D":"三个人中没有罪犯"},"answer":"A","explanation":"第一步：分析题干条件。\n（1）小张：我不是罪犯；\n（2）小李：我们中有人不是罪犯；\n（3）小王：小李是罪犯；\n（4）只有一个人说的是真话。\n第二步：根据题干条件进行推理。\n条件中不存在明显的矛盾和反对关系，根据条件（4）可知只有一个人说真话，因此可从反面找不能同时为假的条件。\n若条件（1）为假，可得“小张是罪犯”；若条件（2）为假，可得“我们所有人都是罪犯”；若条件（3）为假，可得“小李不是罪犯”。经分析条件（2）（3）不能同时为假，结合条件（4）可知条件（2）（3）必有一真一假（谁真谁假无法确定），那么条件（1）一定为假，可得“小张是罪犯”。\n故正确答案为A。","no":67,"missingImage":false},{"type":"question","qid":"12882157","cat":"逻辑判断","stem":"某大型学术会议参与者中，有知名教授是大会主题报告人。因此，有文科生是大会主题报告人。\n上述论证若要成立，需要补充哪项作为前提？","options":{"A":"没有知名教授不是学文科的","B":"没有知名教授是学文科的","C":"有些知名教授不是学文科的","D":"有些知名教授是学文科的"},"answer":"A","explanation":"第一步：找出论点和论据。\n论点：有文科生是大会主题报告人。\n论据：有知名教授是大会主题报告人。\n本题论点说的是“文科生”与“大会主题报告人”之间的关系，论据说的是“知名教授”与“大会主题报告人”之间的关系，二者话题不一致，且问题为“前提”，优先考虑搭桥，即在“知名教授”与“文科生”之间建立联系。\n第二步：逐一分析选项。\nA项：选项可理解为“所有的知名教授都是文科生”，在“知名教授”与“文科生”之间建立联系，与论据“有知名教授是大会主题报告人”结合，可以推出论点成立，搭桥项，当选；\nB项：选项可理解为“所有的知名教授都不是文科生”，证明“知名教授”与“文科生”不存在联系，具有削弱作用，排除；\nC项：选项指出“有些知名教授不是学文科的”，无法确定成为大会主题报告人的知名教授是不是文科生，不明确选项，排除；\nD项：选项指出“有些知名教授是学文科的”，无法确定成为大会主题报告人的知名教授是不是文科生，不明确选项，排除。\n故正确答案为A。","no":68,"missingImage":false},{"type":"question","qid":"13504641","cat":"逻辑判断","stem":"在一项研究中，研究人员对2767名71岁或以上的某国老年人进行了认知检查和三项视力障碍测试：近视力，即近距离看物体的能力；远视力，即看远处物体的能力；对比敏感度，即感知小物体清楚轮廓的能力。研究发现：19%的痴呆症病例可能与至少一种视力障碍相关。因此，研究人员认为，如果消除视力障碍，该国71岁或以上的老年人中近五分之一的痴呆症病例都是可以避免的。\n以下哪项如果为真，最能削弱上述结论？","options":{"A":"上述研究的参与者，大多是71岁以上的老年男性，不具代表性","B":"上述研究的发现是基于关联性，无法证明视力障碍会导致痴呆症","C":"视力障碍值得作为预防老年人痴呆症的干预方法进行审查和研究","D":"在上述研究中，仅仅有2767名参与者，其样本的数量相对较少"},"answer":"B","explanation":"第一步：找出论点和论据。\n论点：如果消除视力障碍，该国71岁或以上的老年人中近五分之一的痴呆症病例都是可以避免的。\n论据：19%的痴呆症病例可能与至少一种视力障碍相关。\n论据和论点讨论的都是“视力障碍”与“痴呆症”的关系，二者话题一致，削弱优先考虑削弱论点。\n第二步：逐一分析选项。\nA项：研究对象大多为老年男性，不具有代表性，说明该实验设置不合理，实验结论可能不准确，削弱论据，可以削弱，保留；\nB项：上述研究的发现是基于关联性，无法证明视力障碍会导致痴呆症，说明视力障碍不一定是导致痴呆症的原因，那么就无法通过消除视力障碍来避免痴呆症，削弱论点，可以削弱，保留；\nC项：视力障碍值得作为预防痴呆症的干预方法进行研究，仅指出该项目值得研究，未明确指出研究结论，为不明确项，无法削弱，排除；\nD项，研究对象的数量相对较少，说明该实验设置不合理，实验结论可能不准确，削弱论据，可以削弱，保留。\n对比A、B、D三项，B项为削弱论点，力度高于A、D两项的削弱论据，故B项削弱力度更强，B项当选。\n故正确答案为B。","no":69,"missingImage":false},{"type":"question","qid":"13504624","cat":"逻辑判断","stem":"在一项对小鼠的研究中，对被诱导患上2型哮喘的小鼠注射一种基因改造细胞CAR-T细胞，就能在实验持续时间中阻止哮喘症状继续出现。研究人员认为该CAR-T细胞可以杀死引发哮喘发作的无赖免疫细胞。因此，CAR-T细胞将大规模用于治疗哮喘。\n以下哪项如果为真，最能削弱上述结论？","options":{"A":"大多数哮喘患者用吸入器就够了，但每年都有约25万人死于严重哮喘","B":"在上述治愈哮喘的实验过程中，小鼠身上并没有产生明显的副作用","C":"哮喘作为一种慢性疾病，其病因复杂，市面上的药物都无法根治","D":"生成CAR-T细胞的费用极其昂贵，预计治疗费用将在三百万元左右"},"answer":"D","explanation":"第一步：找出论点和论据。\n论点：CAR-T细胞将大规模用于治疗哮喘。\n论据：在一项对小鼠的研究中，对被诱导患上2型哮喘的小鼠注射一种基因改造细胞CAR-T细胞，就能在实验持续时间中阻止哮喘症状继续出现。研究人员认为该CAR-T细胞可以杀死引发哮喘发作的无赖免疫细胞。\n本题的论点讨论的是CAR-T细胞会大规模用于治疗哮喘，论据是通过对小鼠的研究实验讨论CAR-T细胞可以杀死引发哮喘发作的无赖免疫细胞，从而治疗哮喘，论点与论据话题一致，削弱可优先考虑削弱论点。\n第二步：逐一分析选项。\nA项：该项指出大多数哮喘患者虽用吸入器即可，但每年仍然有大量患者死于严重哮喘，但论点讨论的是CAR-T细胞是否可大规模用于治疗哮喘，话题不一致，无关项，无法削弱，排除；\nB项：该项指出在实验过程中小鼠未出现明显副作用，但没有提及是否对哮喘有治疗作用，而论点讨论的是CAR-T细胞是否可大规模用于治疗哮喘，无关项，无法削弱，排除；\nC项：该项指出市面上的药物无法根治哮喘，而论点讨论的是CAR-T细胞是否可大规模用于治疗哮喘，话题不一致，无关项，无法削弱，排除；\nD项：该项指出生成CAR-T细胞的费用“极其昂贵”，治疗费用将在三百万元左右，因此很多患者可能会由于其治疗成本高而无法接受该治疗，故CAR-T细胞无法“大规模”用于治疗哮喘，直接削弱论点，可以削弱，当选。\n故正确答案为D。","no":70,"missingImage":false},{"type":"question","qid":"13504618","cat":"逻辑判断","stem":"一项对平均年龄为30岁的109名男性和116名女性的肌肉活检的分析研究发现：男性和女性肌肉对第一次运动的反应存在差异。男性的肌肉显示出更多的细胞压力证据，这表明他们的肌肉比女性的肌肉更难以适应运动。因此，女性比男性更适应运动。\n以下哪项如果为真，最能削弱上述论证？","options":{"A":"反复锻炼可以消除男性和女性对运动反应的最初差异","B":"与女性相比，男性一般具有较强的负重能力","C":"两性肌肉用于将食物转化成能量的蛋白质也存在一定的差异","D":"男性肌肉利用葡萄糖进行运动的能力更强，女性则使用更多脂肪酸"},"answer":"A","explanation":"第一步：找出论点和论据。\n论点：女性比男性更适应运动。\n论据：一项对平均年龄为30岁的109名男性和116名女性的肌肉活检的分析研究发现：男性和女性肌肉对第一次运动的反应存在差异。男性的肌肉显示出更多的细胞压力证据，这表明他们的肌肉比女性的肌肉更难以适应运动。\n本题论点说的是“女性比男性更适应运动”，论据说的是“男性肌肉比女性肌肉更难以适应第一次运动”，论点是对女性和男性谁更适应运动的整体情况的比较，而论据只比较了女性和男性第一次运动的情况，二者所讨论的话题范围不一致，削弱优先考虑拆桥，即证明“第一次运动”不能代表“整体”情况。\n第二步：逐一分析选项。\nA项：选项说的是反复锻炼可以消除男性和女性对运动反应的最初差异，说明虽然男性比女性更难以适应第一次运动，但通过反复锻炼可以消除差异，即反复锻炼后，男性和女性对于运动的反应相同，说明“第一次运动”不能代表“整体”情况，为拆桥项，可以削弱，当选；\nB项：选项说的是男性比女性负重能力强，论点说的是女性比男性更适应运动，话题不一致，无关选项，无法削弱，排除；\nC项：选项说的是两性肌肉用于将食物转化成能量的蛋白质也存在一定的差异，论点说的是女性比男性更适应运动，话题不一致，无关选项，无法削弱，排除；\nD项：选项说的是男性肌肉利用葡萄糖进行运动的能力更强，女性则使用更多脂肪酸，但并不明确利用葡萄糖进行运动的能力和运用脂肪酸进行运动的能力谁更强，不明确选项，无法削弱，排除。\n故正确答案为A。","no":71,"missingImage":false},{"type":"question","qid":"13504639","cat":"逻辑判断","stem":"科学家尝试利用细菌从旧电池和废弃电子设备中提取锂、钴、锰等稀有金属。目前，科学家在实验中已成功提取了锰和锂：细菌会抓住金属原子，然后将其作为纳米粒子吐出来，进而沉淀形成固体化学品。科学家因此认为细菌将助力这些稀有金属的循环利用。\n上述论证的成立需要补充以下哪项作为前提？","options":{"A":"稀有金属对光伏电池、风力发电机等都是至关重要的","B":"上述研究中提取这些稀有金属的细菌是能自然产生的","C":"细菌从旧设备中提取出来的金属可以用作新设备的制作","D":"人类可能会耗尽制造风力发电机、光伏电池的金属材料"},"answer":"C","explanation":"第一步：找出论点和论据。\n论点：细菌将助力这些稀有金属的循环利用。\n论据：科学家在实验中已成功提取了锰和锂：细菌会抓住金属原子，然后将其作为纳米粒子吐出来，进而沉淀形成固体化学品。\n本题的论据和论点均讨论的是细菌可以提取稀有金属，让稀有金属可以循环利用，二者话题一致，提问为“前提”，可优先考虑必要条件。\n第二步：逐一分析选项。\nA项：该项说的是稀有金属对光伏电池和风力发电机等的重要性，并未提及细菌是否能助力稀有金属的循环利用，话题不一致，无法加强，排除；\nB项：该项说提取稀有金属的细菌能自然产生，但未提及细菌是否能助力稀有金属的循环利用，话题不一致，无法加强，排除；\nC项：如果细菌从旧设备中提取出来的金属不可以用作新设备的制作，那么细菌就不能助力稀有金属的循环利用，论点就不成立，故该项为论点成立的必要条件，可以加强，当选；\nD项：该项说人类可能会耗尽制造风力发电机、光伏电池的金属材料，但未提及细菌是否能助力稀有金属的循环利用，话题不一致，无法加强，排除。\n故正确答案为C。","no":72,"missingImage":false},{"type":"question","qid":"13504642","cat":"逻辑判断","stem":"研究人员分析了生物库中26000多名53岁至86岁成年人的数据，以调查睡眠时间、模式和质量等各方面对人们精神敏锐度和认知能力的影响。受试者完成了各种认知测试，包括记忆力、反应时间和流体智力测试。研究结果表明，与早起者相比，晚睡者在认知测试中表现更好。在一个小组中，晚睡者的得分比早起者的得分高出约13.5%；在另一个小组中则高出7.5%。研究人员据此得出结论，晚睡者一般比早起者的头脑更敏锐。\n以下哪项如果为真，最能削弱上述结论？","options":{"A":"研究中认知测试得分高的人，其睡眠质量高，他们不需要太早进入睡眠","B":"既不能睡得太多，也不能睡得太少，这对保证大脑的敏锐思考至关重要","C":"无论是晚睡还是早起，都是个人的生活习惯，受到多重因素影响而形成","D":"晚睡者有夜间活动的习惯，他们也难以早起，且起床后会感到精力不济"},"answer":"A","explanation":"第一步：找出论点和论据。\n论点：晚睡者一般比早起者的头脑更敏锐。\n论据：研究结果表明，与早起者相比，晚睡者在认知测试中表现更好。在一个小组中，晚睡者的得分比早起者的得分高出约13.5%；在另一个小组中则高出7.5%。\n本题论点说的是晚睡者的头脑更敏锐，论据说的是晚睡者在认知测试中表现更好，二者话题一致，削弱优先考虑削弱论点，因论据为实验，故也可以考虑削弱论据。\n第二步：逐一分析选项。\nA项：该项说的是认知测试得分高的人其睡眠质量高，说明这些人是因为自身睡眠质量高而晚睡的，晚睡并不会影响其认知测试得分，实验结果可能不成立，削弱论据，当选；\nB项：该项说的是睡眠时长对大脑敏锐思考的重要性，而论点讨论的是晚睡和早起的情况，话题不一致，无法削弱，排除；\nC项：该项说的是影响晚睡和早起习惯形成的因素有多种，而论点讨论的是晚睡者和早起者谁的头脑更敏锐，话题不一致，无法削弱，排除；\nD项：该项说的是晚睡者有夜间活动的习惯，难以早起且起床后会感到精力不济，而论点讨论的是晚睡者和早起者谁的头脑更敏锐，话题不一致，无法削弱，排除。\n故正确答案为A。","no":73,"missingImage":false},{"type":"question","qid":"13504638","cat":"逻辑判断","stem":"多年来，专家们一致认为，久坐会损害员工的健康，增加患心血管疾病的风险，因此站着工作一直备受推崇。然而，最新的一项研究结果却与这一观点相悖。研究发现，站立时间超过两小时后，每增加半小时，患循环系统疾病的风险就会增加11%。研究人员据此认为，站着工作也有健康风险。\n以下哪项如果为真，最能支持上述结论？","options":{"A":"站立会加剧血液循环不良问题，导致静脉曲张或深静脉血栓","B":"在工作中，站立时间过长并不能弥补久坐不动带来的损害","C":"久坐之后增加一些运动，有助于降低患心脏病的风险","D":"站着工作实际上并不会降低患心血管疾病的风险"},"answer":"A","explanation":"第一步：找出论点和论据。\n论点：站着工作也有健康风险。\n论据：研究发现，站立时间超过两小时后，每增加半小时，患循环系统疾病的风险就会增加11%。\n本题论点和论据都在讨论站着与健康风险的关系，二者话题一致，加强优先考虑补充论据。\n第二步：逐一分析选项。\nA项：该项指出站立会加剧血液循环不良问题，导致静脉曲张或深静脉血栓，说明站着工作确实也有健康风险，补充论据，可以加强，当选；\nB项：该项指出站立时间过长不能弥补久坐不动带来的损害，但无法确定站着工作有没有健康风险，话题不一致，无法加强，排除；\nC项：该项指出久坐之后增加一些运动有助于降低患心脏病的风险，与论点讨论的站着工作有健康风险无关，话题不一致，无法加强，排除；\nD项：该项指出站着工作并不会降低患心血管疾病的风险，但无法确定站着工作会不会增加健康风险，为不明确项，无法加强，排除。\n故正确答案为A。","no":74,"missingImage":false},{"type":"question","qid":"12882039","cat":"逻辑判断","stem":"近年来，某国经济持续低迷。2023年该国国内生产总值萎缩1.3%，2024年乐观估计将萎缩1.1%。与此同时，能源成本高、数字化程度低和缺乏熟练劳动力等结构性问题凸显。因此，有分析人士认为，结构性问题是导致该国经济持续低迷的原因。\n如果以下为真，能支持这一结论的是?","options":{"A":"受地区因素影响，该国能源供应紧张，使得该国的制造业举步维艰","B":"各项分析指标表明，该国预期经济复苏缓慢且具有很大的不确定性","C":"该国在工业数字化改革方面进程缓慢，目前仍停留在传统工业阶段","D":"该国采取过于宽松的货币政策，通货膨胀压力增大，影响经济稳定"},"answer":"A","explanation":"第一步：找出论点和论据。\n论点：结构性问题是导致该国经济持续低迷的原因。\n论据：近年来，某国经济持续低迷。2023年该国国内生产总值萎缩1.3%，2024年乐观估计将萎缩1.1%。与此同时，能源成本高、数字化程度低和缺乏熟练劳动力等结构性问题凸显。\n论据和论点讨论的都是该国结构性问题和经济低迷之间的关系，话题一致，加强优先考虑补充论据。\n第二步：逐一分析选项。\nA项：选项指出受地区因素影响，该国能源供应紧张，使得该国的制造业举步维艰，说明能源的结构性问题导致制造业举步维艰，进而导致该国经济持续低迷，补充论据，可以加强，当选；\nB项：选项指出该国预期经济复苏缓慢且具有很大的不确定性，说的是该国经济的发展趋势，而论点说的是该国经济低迷的原因，二者话题不一致，无法加强，排除；\nC项：选项指出该国在工业数字化改革方面进程缓慢，目前仍停留在传统工业阶段，但停留在传统工业阶段不代表经济低迷，无法加强，排除；\nD项：选项指出该国采取过于宽松的货币政策，通货膨胀压力增大，影响经济稳定，说明该国的货币政策会影响经济稳定，但不明确结构性问题是否会导致该国经济低迷，无法加强，排除。\n故正确答案为A。","no":75,"missingImage":false}],"count":35,"answerable":35,"pointsOf":28},{"label":"资料分析","items":[{"type":"material","material":"\u003cp>\u003cimg data-k=\"184088ede654\" style=\"max-width:548px\">\u003c/p>","questions":[{"qid":"12882026","cat":"综合","stem":"2023上半年，全国白酒产量为多少（    ）。","options":{"A":"不到150千万升","B":"180～200千万升","C":"200～220千万升","D":"220千万升以上"},"answer":"C","explanation":"根据题干求“2023上半年，全国白酒产量”和表格材料中2024年现期量和增长率，可判定本题为基期计算问题。定位材料表格可得：2024年6月全国白酒累计产量215千万升，同比增长2.4%。根据公式：基期量\u003cimg data-k=\"d004fb37a3de\">，则2023上半年，全国白酒产量\u003cimg data-k=\"13b5ca8dcc17\">千万升，在C项范围内。\n故正确答案为C。","no":76,"missingImage":false},{"qid":"12882027","cat":"增长","stem":"2024年3-11月，全国啤酒当期产量增长率高于累计增长率的有几个？","options":{"A":"3","B":"4","C":"5","D":"6"},"answer":"A","explanation":"根据题干“2024年3-11月······当期产量增长率高于累计增长率······”，结合材料给出2024年2-11月各月累计增长率且当期累计产量=上期累计产量+当期产量，可判定本题为混合增长率问题。定位统计表可知2024年2-11月各月全国啤酒累计产量的同比增速。根据混合增长率口诀“混合后居中”，结合题干需满足\u003cimg data-k=\"a862894b33cb\">，则找到满足\u003cimg data-k=\"675f3d7dbc18\">的月份即可。观察统计表，满足条件的有：\u003cimg data-k=\"cc4d5e02daea\">，\u003cimg data-k=\"7835a9f0fcfb\">，\u003cimg data-k=\"15f0f6c578f3\">。\n综上可知，满足条件的月份有8月、9月、11月，共3个。\n故正确答案为A。","no":77,"missingImage":false},{"qid":"12882028","cat":"倍数","stem":"2023年一季度全国啤酒累计产量是白酒产量的几倍？","options":{"A":"不到5倍","B":"5～6倍","C":"6～7倍","D":"7倍以上"},"answer":"B","explanation":"根据题干“2023年一季度······是······的几倍”，结合材料给出的2024年3月累计产量，即2024年一季度数据，可判定本题为基期倍数问题。定位统计表可得：2024年3月全国啤酒累计产量872千万升（A），同比增长2.3%（a）；白酒累计产量126千万升（B），同比增长-15.3%（b）。根据公式：基期倍数\u003cimg data-k=\"5d19e88a3fa9\">，可得所求为\u003cimg data-k=\"54ab265f8452\">\u003cimg data-k=\"e99bed497973\">\u003cimg data-k=\"8a98171bd92b\">倍，在B项范围内。\n故正确答案为B。","no":78,"missingImage":false},{"qid":"12882029","cat":"综合","stem":"2023年三季度全国白酒当季度产量为多少?","options":{"A":"不到80千万升","B":"80~120千万升","C":"120到160千万升","D":"160到180千万升"},"answer":"B","explanation":"根据题干“2023年三季度······当季度产量为多少”，结合材料时间为2024年2月-11月累计产量情况，即材料给出的是1-2月，······，1-11月的产量数据，可判定本题为基期和差问题。定位统计表可得：2024年6月全国白酒累计产量为215千万升，同比增速为2.4%；2024年9月全国白酒累计产量为298千万升，同比增速为-2.8%。根据公式：基期量\u003cimg data-k=\"51e165712c75\">，则2023年三季度全国白酒当季度产量为\u003cimg data-k=\"62b0d0c02b3a\">\u003cimg data-k=\"d2cf5a9a9734\">千万升，在B项范围内。\n故正确答案为B。","no":79,"missingImage":false},{"qid":"12882030","cat":"增长","stem":"下图为2024年全国白酒或啤酒哪个季度各月当期环比增长率的变化趋势？\n\u003cimg data-k=\"68ce42dd4286\" style=\"max-width:339px\">","options":{"A":"白酒、第二季度","B":"白酒、第三季度","C":"啤酒、第二季度","D":"啤酒、第三季度"},"answer":"D","explanation":"根据题干“······2024年······哪个季度各月当期环比增长率的变化趋势”，可判定本题为一般增长率问题。定位表格材料可得2024年2-9月白酒和啤酒累计产量。根据当月产量=当月累计产量-上月累计产量，可得2024年3-9月，白酒各月产量依次为43千万升、30千万升、34千万升、25千万升、20千万升、27千万升、36千万升；啤酒各月产量依次为305千万升、278千万升、355千万升、404千万升、358千万升、371千万升、292千万升。根据公式：\u003cimg data-k=\"b959181d1ddd\">，可得选项中各指标环比增长率如下：\nA项，白酒、第二季度：4月，\u003cimg data-k=\"fbdba3bebd45\">\u003cimg data-k=\"0c79ca2ef99d\">；5月，\u003cimg data-k=\"267bdaebe6bf\">\u003cimg data-k=\"3063dc534c73\">；6月，\u003cimg data-k=\"8adcc99b857b\">\u003cimg data-k=\"31edca115e40\">，则第一个点低于第三个点，不符合折线图的变化趋势，排除；\nB项，白酒、第三季度：7月，\u003cimg data-k=\"991dc294b087\">\u003cimg data-k=\"fb119e9e977f\">；8月，\u003cimg data-k=\"5bf828cc88c5\">\u003cimg data-k=\"3acf34d09eba\">；9月，\u003cimg data-k=\"617f92b0551d\">\u003cimg data-k=\"698d8e828da7\">，则第一个点低于第三个点，不符合折线图的变化趋势，排除；\nC项，啤酒、第二季度：4月，\u003cimg data-k=\"42ba09fc91f2\">\u003cimg data-k=\"a4f69df62e19\">；5月，\u003cimg data-k=\"caa3159c1337\">\u003cimg data-k=\"8ebc1b071133\">；6月，\u003cimg data-k=\"2bdb5a0849c3\">\u003cimg data-k=\"5a31aea4cfc5\">，则第一个点低于第三个点，不符合折线图的变化趋势，排除；\nD项，啤酒、第三季度：7月，\u003cimg data-k=\"53d351d779ed\">\u003cimg data-k=\"3ae28cdc7669\">；8月，\u003cimg data-k=\"7bfd94fe30a5\">\u003cimg data-k=\"59800ddcece3\">；9月，\u003cimg data-k=\"b83a55ed5331\">\u003cimg data-k=\"91b1520cbf6b\">，符合折线图的变化趋势，当选。\n故正确答案为D。","no":80,"missingImage":false}]},{"type":"material","material":"\u003cp>        2024年7月，规模以上工业发电量8831亿千瓦时，同比增长2.5％，增速比6月加快0.2个百分点；规模以上工业日均发电量284.9亿千瓦时。\u003c/p>\u003cp>        2024年1~7月，规模以上工业发电量53239亿千瓦时，同比增长4.8％。分品种看，2024年7月，规模以上工业火电发电量同比下降4.9％，规模以上工业水电发电量同比增长36.2％，规模以上工业核电发电量同比增长4.3％，规模以上工业风电发电量同比增长0.9％，规模以上工业太阳能发电量同比增长16.4％。\u003c/p>\u003cp>\u003cimg data-k=\"f08c419c5d2f\" style=\"max-width:659px\">\u003c/p>","questions":[{"qid":"13504653","cat":"综合","stem":"2023年上半年规模以上工业发电量约为：","options":{"A":"3.9万亿千瓦时","B":"4.2万亿千瓦时","C":"4.5万亿千瓦时","D":"5.1万亿千瓦时"},"answer":"B","explanation":"根据题干“2023年上半年······约为”，结合材料时间为2024年1-7月和7月，可判定本题为基期和差问题。定位文字资料第一段可得：2024年7月，规模以上工业发电量8831亿千瓦时，同比增长2.5%；定位文字资料第二段可得：2024年1-7月，规模以上工业发电量53239亿千瓦时，同比增长4.8%。根据公式：基期量\u003cimg data-k=\"c0e0d0d6f938\">，则题干所求\u003cimg data-k=\"b64833a34b51\">\u003cimg data-k=\"23b0de2cac71\">亿千瓦时=4.213万亿千瓦时，与B项最接近。\n故正确答案为B。","no":81,"missingImage":false},{"qid":"13504654","cat":"比重","stem":"2024年7月，规模以上工业五种发电形式的发电量分别占规模以上工业总发电量的比重较2023年7月下降的品种共有：","options":{"A":"1种","B":"2种","C":"3种","D":"4种"},"answer":"B","explanation":"根据题干“2024年7月······占······的比重较2023年7月下降的品种共有”，可判定本题为两期比重问题。定位文字材料第一段可得：2024年7月，规模以上工业发电量同比增长2.5％（b）；定位文字材料第二段可得2024年7月规模以上工业五种发电形式的发电量同比增速，分别为：火电-4.9%（\u003cimg data-k=\"2dbb4ce8f5ca\">），水电36.2%（\u003cimg data-k=\"2974f06ad5e6\">），核电4.3%（\u003cimg data-k=\"9b183da12609\">），风电0.9%（\u003cimg data-k=\"cd915fe2cfa0\">），太阳能16.4%（\u003cimg data-k=\"277df8250d2c\">）。根据两期比重比较的结论：当部分增长率（a）&lt;整体增长率（b）时，比重下降。则满足a&lt;b的有：火电-4.9%（\u003cimg data-k=\"2dbb4ce8f5ca\">），风电0.9%（\u003cimg data-k=\"cd915fe2cfa0\">），共有2种。\n故正确答案为B。","no":82,"missingImage":false},{"qid":"13504655","cat":"综合","stem":"2023年第三季度，规模以上工业发电量约为：","options":{"A":"不到2.3万亿千瓦时","B":"2.3~2.4万亿千瓦时","C":"2.4~2.5万亿千瓦时","D":"2.5万亿千瓦时以上"},"answer":"C","explanation":"根据题干“2023年第三季度······约为”，结合材料给出2023年7-9月各月规模以上工业日均发电量，可判定本题为现期平均数问题。定位统计图可得：2023年7-9月规模以上工业日均发电量分别为278.0亿千瓦时、272.6亿千瓦时、248.5亿千瓦时。根据公式：总数=平均数×天数，则2023年第三季度规模以上工业发电量\u003cimg data-k=\"6b896b2c74aa\">\u003cimg data-k=\"20283e87aa97\">\u003cimg data-k=\"697e9c00a3b1\">\u003cimg data-k=\"9c68cbe1d806\">\u003cimg data-k=\"9b77296436a5\">亿千瓦时\u003cimg data-k=\"52e73ce1fdaf\">万亿千瓦时，在C项范围内。\n故正确答案为C。","no":83,"missingImage":false},{"qid":"13504656","cat":"综合","stem":"2023年第二季度，规模以上工业日均发电量由大到小排序正确的是：","options":{"A":"4月、5月、6月","B":"5月、6月、4月","C":"6月、4月、5月","D":"6月、5月、4月"},"answer":"D","explanation":"根据题干“2023年第二季度······发电量由大到小排序正确的是”，结合材料给出2024年4-6月相关数据，可判定本题为基期比较问题。定位统计图可知2024年4-6月规模以上工业日均发电量及其同比增速。根据公式：基期量\u003cimg data-k=\"4ec2c10dc29a\">，则2023年4-6月，规模以上工业日均发电量分别为：4月，\u003cimg data-k=\"ab091d18d9c4\">亿千瓦时；5月，\u003cimg data-k=\"ea21d7160fb2\">亿千瓦时；6月，\u003cimg data-k=\"a79bcb030f26\">亿千瓦时。\n在三个分数中，4月对应分数的分子最小，分母最大，则4月对应分数值最小，可排除A、C两项；其余两个分数分母相同，分子大的分数值大，则6月分数值最大，5月分数值次大。因此，2023年第二季度，规模以上工业日均发电量由大到小排序为：6月、5月、4月。\n故正确答案为D。","no":84,"missingImage":false},{"qid":"13504657","cat":"增长","stem":"以下折线图中，能正确反映2022年第四季度各月日均发电量的环比增长率变化的是：","options":{"A":"\u003cimg data-k=\"417a3ebbea05\" style=\"max-width:267px\">","B":"\u003cimg data-k=\"18b1e6812ffc\" style=\"max-width:267px\">","C":"\u003cimg data-k=\"75d91ab85383\" style=\"max-width:267px\">","D":"\u003cimg data-k=\"3709a25e6404\" style=\"max-width:267px\">"},"answer":"A","explanation":"方法一：根据题干“······能正确反映2022年第四季度各月日均发电量的环比增长率变化的是”，可判定本题为一般增长率比较问题。定位统计图可得2023年9-12月日均发电量及其同比增速。根据公式：基期量\u003cimg data-k=\"4ec2c10dc29a\">，可得2022年9-12月各月日均发电量分别为：9月，\u003cimg data-k=\"cb84740cc0ee\">亿千瓦时；10月，\u003cimg data-k=\"da945aacc186\">亿千瓦时；11月，\u003cimg data-k=\"a40ae30285f1\">亿千瓦时；12月，\u003cimg data-k=\"77e38674c0cd\">亿千瓦时。根据公式：增长率\u003cimg data-k=\"7a919ee92a2e\">，可得2022年第四季度各月日均发电量的环比增长率分别为：10月，\u003cimg data-k=\"a6454206770d\">；11月，\u003cimg data-k=\"999a89b05d43\">；12月，\u003cimg data-k=\"c96c5f1dab05\">，比较可知，12月最大，10月最小，只有A项符合。\n方法二：根据增长率比较技巧：若\u003cimg data-k=\"dd60a582331d\">大，则增长率大。题目所需比较的2022年第四季度各月日均发电量的环比增长率\u003cimg data-k=\"6054735c3872\">，故只需比较\u003cimg data-k=\"df14998792c8\">即可。结合材料时间为2023年，可判定本题为基期倍数问题。定位统计图可得2023年9-12月日均发电量及其同比增速。根据公式：基期倍数\u003cimg data-k=\"5d19e88a3fa9\">，可得2022年第四季度各月环比倍数分别为：\n10月，\u003cimg data-k=\"43f02e16e7f0\">；\n11月，\u003cimg data-k=\"b88d8e94fb42\">；\n12月，\u003cimg data-k=\"c8f2cd6d8ec2\">。\n比较可知12月&gt;10月，排除C、D两项；12月&gt;11月，排除B项。\n故正确答案为A。","no":85,"missingImage":false}]},{"type":"material","material":"\u003cp>        2023年末，全国群众文化机构的实际使用房屋建筑面积5631.6万平方米，同比增长7.8%，全国平均每万人群众文化设施建筑面积399.5平方米，同比增长6.5%。\u003c/p>\u003cp>\u003cimg data-k=\"25bb48e7e8bf\" style=\"max-width:673px\">\u003c/p>\u003cp>\u003cimg data-k=\"53842366927b\" style=\"max-width:557px\">\u003c/p>","questions":[{"qid":"13504658","cat":"综合","stem":"2022年末，全国群众文化机构实际使用房屋建筑面积约为：","options":{"A":"不到5100万平方米","B":"5100~5200万平方米","C":"5200~5300万平方米","D":"5300万平方米以上"},"answer":"C","explanation":"根据题干“2022年末······面积约为”，结合材料时间为2023年末，可判定本题为基期计算问题。定位文字材料可得：2023年末，全国群众文化机构的实际使用房屋建筑面积5631.6万平方米，同比增长7.8%。根据公式：基期量\u003cimg data-k=\"51e165712c75\">，可得所求\u003cimg data-k=\"fc80b4ab66c5\">万平方米。\n故正确答案为C。","no":86,"missingImage":false},{"qid":"13504659","cat":"比重","stem":"2023年，展览活动的服务人次占各项活动总服务人次的比重较2022年：","options":{"A":"增加不到5个百分点","B":"增加至少5个百分点","C":"下降不到5个百分点","D":"下降至少5个百分点"},"answer":"C","explanation":"根据题干“2023年······占······的比重较2022年”，结合选项为增加/下降+百分点，可判定本题为两期比重问题。定位表格资料可知，2023年全国各项活动的总计服务人次为183537万人次（B），同比增长91.6%（b）；展览活动的服务人次为32673万人次（A），同比增长64.5%（a）。根据两期比重差公式：\u003cimg data-k=\"344536797e49\">，则所求比重差\u003cimg data-k=\"831c97366715\">\u003cimg data-k=\"7d9ac7322631\">\u003cimg data-k=\"0ef29f756216\">\u003cimg data-k=\"b8ef2347197f\">，约下降3个百分点，即下降不到5个百分点。\n故正确答案为C。","no":87,"missingImage":false},{"qid":"13504660","cat":"增长","stem":"2014~2023年，全国平均每万人群众文化设施建筑面积的同比增量超过20平方米的年份有：","options":{"A":"3年","B":"4年","C":"5年","D":"6年"},"answer":"B","explanation":"根据“2014~2023年······同比增量超过20平方米······”，可判定本题为增长量计算问题。定位统计图可得：2013-2023年全国平均每万人群众文化设施建筑面积。根据公式：增长量=现期量-基期量，可得2014-2023年，全国平均每万人群众文化设施建筑面积同比增量分别为：\n2014年同比增量=269.2-249.1=20.1平方米；\n2015年同比增量=280.0-269.2=10.8平方米；\n2016年同比增量=288.6-280.0=8.6平方米；\n2017年同比增量=295.4-288.6=6.8平方米；\n2018年同比增量=307.0-295.4=11.6平方米；\n2019年同比增量=322.7-307.0=15.7平方米；\n2020年同比增量=331.3-322.7=8.6平方米；\n2021年同比增量=352.1-331.3=20.8平方米；\n2022年同比增量=375.2-352.1=23.1平方米；\n2023年同比增量=399.5-375.2=24.3平方米。\n则2014~2023年，全国平均每万人群众文化设施建筑面积的同比增量超过20平方米的年份有2014年、2021年、2022年和2023年，共4个年份。\n故正确答案为B。","no":88,"missingImage":false},{"qid":"13504661","cat":"平均数","stem":"2022年文艺活动平均每场次活动服务的人次约为：","options":{"A":"不到400人次","B":"400～450人次","C":"450～500人次","D":"500人次以上"},"answer":"B","explanation":"根据题干“2022年······平均每场次活动服务的人次约为”，结合材料时间为2023年，可判定本题为基期平均数问题。定位统计表可知，2023年全国文艺活动为246万场次（B），同比增长54.0%（b）；服务人次为139298万人次（A），同比增长103.7%（a）。根据公式：基期平均数\u003cimg data-k=\"5d19e88a3fa9\">，则2022年文艺活动平均每场次活动服务的人次为\u003cimg data-k=\"c7ac3a3f268c\">\u003cimg data-k=\"0d11db03a4b4\">人次，在B项范围内。\n故正确答案为B。","no":89,"missingImage":false},{"qid":"13504662","cat":"增长","stem":"以下折线图中，能准确反映2019~2021年全国平均每万人群众文化设施建筑面积同比增长率变化趋势的是：","options":{"A":"\u003cimg data-k=\"934933f5cf32\" style=\"max-width:240px\">","B":"\u003cimg data-k=\"40bbdfadc5d6\" style=\"max-width:240px\">","C":"\u003cimg data-k=\"4d3ba937705a\" style=\"max-width:240px\">","D":"\u003cimg data-k=\"e25a41450276\" style=\"max-width:240px\">"},"answer":"A","explanation":"根据题干“······能准确反映2019~2021年······同比增长率变化趋势的是”，可判定本题为一般增长率问题。定位统计图可知：2018~2021年全国平均每万人群众文化设施建筑面积分别为307.0平方米、322.7平方米、331.3平方米、352.1平方米。根据公式：增长率\u003cimg data-k=\"7a919ee92a2e\">，可得2019~2021年全国平均每万人群众文化设施建筑面积同比增长率分别为：\n2019年，\u003cimg data-k=\"28818fc222f4\">；\n2020年，\u003cimg data-k=\"01432aa07326\">；\n2021年，\u003cimg data-k=\"fb419741785e\">。\n比较可知，2021年同比增长率最大、2020年同比增长率最小，只有A项符合。\n故正确答案为A。","no":90,"missingImage":false}]}],"count":15,"answerable":15,"pointsOf":16}],"total":90,"affected":[],"subtitle":"2025年 · 内蒙古 · 5/6 模块"}]};
+window.__IMGS__={"9f2345dd44ec":"9f2345dd44ec.png","49e5fc50b77e":"49e5fc50b77e.png","7b46d5e225ec":"7b46d5e225ec.png","687d433f0b2f":"687d433f0b2f.png","3e018cbb6cf4":"3e018cbb6cf4.png","0f4bb4772d00":"0f4bb4772d00.png","736d60f1abf2":"736d60f1abf2.png","2e3a18b90e61":"2e3a18b90e61.png","895e0099c110":"895e0099c110.png","7c49b2951282":"7c49b2951282.png","5ef3a129e326":"5ef3a129e326.png","54d707f15b45":"54d707f15b45.png","ff1b1de9ab8e":"ff1b1de9ab8e.png","170ce8fc8ae0":"170ce8fc8ae0.png","f212cd983b97":"f212cd983b97.png","ee574a16c810":"ee574a16c810.png","ce3be1bd31ff":"ce3be1bd31ff.png","e31e7ef1fb8d":"e31e7ef1fb8d.png","131749f3a1af":"131749f3a1af.png","26a2a81af34f":"26a2a81af34f.png","e51fe50e1f30":"e51fe50e1f30.png","23cd18e84454":"23cd18e84454.png","b3d8d6d9aa90":"b3d8d6d9aa90.png","7f1f65595cc7":"7f1f65595cc7.png","52891e3eee92":"52891e3eee92.png","75f3e5e5faf1":"75f3e5e5faf1.png","ccac534b1e46":"ccac534b1e46.png","c00690072690":"c00690072690.png","43d36b1af7c7":"43d36b1af7c7.png","443c204aea68":"443c204aea68.png","1d126bb70383":"1d126bb70383.png","1db4c9dd8d56":"1db4c9dd8d56.png","2029f00e4086":"2029f00e4086.png","cfd28654cbe7":"cfd28654cbe7.png","aa546d6dc16d":"aa546d6dc16d.png","f8ac20620f9b":"f8ac20620f9b.png","471d10c770c3":"471d10c770c3.png","c0ef1002e481":"c0ef1002e481.png","a475c0e431cd":"a475c0e431cd.png","031211a4b5d7":"031211a4b5d7.png","22785365e55f":"22785365e55f.jpg","b71179c0f726":"b71179c0f726.jpg","5e95001e11c6":"5e95001e11c6.png","62886ffdfcd1":"62886ffdfcd1.png","69e54fdf96da":"69e54fdf96da.png","3ff7182f2395":"3ff7182f2395.png","eb6aaad15a2c":"eb6aaad15a2c.png","bc57e44f081e":"bc57e44f081e.png","184088ede654":"184088ede654.png","d004fb37a3de":"d004fb37a3de.png","13b5ca8dcc17":"13b5ca8dcc17.png","a862894b33cb":"a862894b33cb.png","675f3d7dbc18":"675f3d7dbc18.png","cc4d5e02daea":"cc4d5e02daea.png","7835a9f0fcfb":"7835a9f0fcfb.png","15f0f6c578f3":"15f0f6c578f3.png","5d19e88a3fa9":"5d19e88a3fa9.png","54ab265f8452":"54ab265f8452.png","e99bed497973":"e99bed497973.png","8a98171bd92b":"8a98171bd92b.png","51e165712c75":"51e165712c75.png","62b0d0c02b3a":"62b0d0c02b3a.png","d2cf5a9a9734":"d2cf5a9a9734.png","68ce42dd4286":"68ce42dd4286.png","b959181d1ddd":"b959181d1ddd.png","fbdba3bebd45":"fbdba3bebd45.png","0c79ca2ef99d":"0c79ca2ef99d.png","267bdaebe6bf":"267bdaebe6bf.png","3063dc534c73":"3063dc534c73.png","8adcc99b857b":"8adcc99b857b.png","31edca115e40":"31edca115e40.png","991dc294b087":"991dc294b087.png","fb119e9e977f":"fb119e9e977f.png","5bf828cc88c5":"5bf828cc88c5.png","3acf34d09eba":"3acf34d09eba.png","617f92b0551d":"617f92b0551d.png","698d8e828da7":"698d8e828da7.png","42ba09fc91f2":"42ba09fc91f2.png","a4f69df62e19":"a4f69df62e19.png","caa3159c1337":"caa3159c1337.png","8ebc1b071133":"8ebc1b071133.png","2bdb5a0849c3":"2bdb5a0849c3.png","5a31aea4cfc5":"5a31aea4cfc5.png","53d351d779ed":"53d351d779ed.png","3ae28cdc7669":"3ae28cdc7669.png","7bfd94fe30a5":"7bfd94fe30a5.png","59800ddcece3":"59800ddcece3.png","b83a55ed5331":"b83a55ed5331.png","91b1520cbf6b":"91b1520cbf6b.png","f08c419c5d2f":"f08c419c5d2f.png","c0e0d0d6f938":"c0e0d0d6f938.png","b64833a34b51":"b64833a34b51.png","23b0de2cac71":"23b0de2cac71.png","2dbb4ce8f5ca":"2dbb4ce8f5ca.png","2974f06ad5e6":"2974f06ad5e6.png","9b183da12609":"9b183da12609.png","cd915fe2cfa0":"cd915fe2cfa0.png","277df8250d2c":"277df8250d2c.png","6b896b2c74aa":"6b896b2c74aa.png","20283e87aa97":"20283e87aa97.png","697e9c00a3b1":"697e9c00a3b1.png","9c68cbe1d806":"9c68cbe1d806.png","9b77296436a5":"9b77296436a5.png","52e73ce1fdaf":"52e73ce1fdaf.png","4ec2c10dc29a":"4ec2c10dc29a.png","ab091d18d9c4":"ab091d18d9c4.png","ea21d7160fb2":"ea21d7160fb2.png","a79bcb030f26":"a79bcb030f26.png","417a3ebbea05":"417a3ebbea05.png","18b1e6812ffc":"18b1e6812ffc.png","75d91ab85383":"75d91ab85383.png","3709a25e6404":"3709a25e6404.png","cb84740cc0ee":"cb84740cc0ee.png","da945aacc186":"da945aacc186.png","a40ae30285f1":"a40ae30285f1.png","77e38674c0cd":"77e38674c0cd.png","7a919ee92a2e":"7a919ee92a2e.png","a6454206770d":"a6454206770d.png","999a89b05d43":"999a89b05d43.png","c96c5f1dab05":"c96c5f1dab05.png","dd60a582331d":"dd60a582331d.png","6054735c3872":"6054735c3872.png","df14998792c8":"df14998792c8.png","43f02e16e7f0":"43f02e16e7f0.png","b88d8e94fb42":"b88d8e94fb42.png","c8f2cd6d8ec2":"c8f2cd6d8ec2.png","25bb48e7e8bf":"25bb48e7e8bf.png","53842366927b":"53842366927b.png","fc80b4ab66c5":"fc80b4ab66c5.png","344536797e49":"344536797e49.png","831c97366715":"831c97366715.png","7d9ac7322631":"7d9ac7322631.png","0ef29f756216":"0ef29f756216.png","b8ef2347197f":"b8ef2347197f.png","c7ac3a3f268c":"c7ac3a3f268c.png","0d11db03a4b4":"0d11db03a4b4.png","934933f5cf32":"934933f5cf32.png","40bbdfadc5d6":"40bbdfadc5d6.png","4d3ba937705a":"4d3ba937705a.png","e25a41450276":"e25a41450276.png","28818fc222f4":"28818fc222f4.png","01432aa07326":"01432aa07326.png","fb419741785e":"fb419741785e.png"};
+</script>
+<script>
+(function(){
+"use strict";
+var BUNDLE = window.__EXAM__;
+
+/* ---------------- helpers ---------------- */
+function $(s,r){return (r||document).querySelector(s)}
+function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
+function esc(s){return String(s==null?"":s)}
+function toast(msg){
+  var t=$("#toast"); t.textContent=msg; t.classList.add("on");
+  clearTimeout(t._h); t._h=setTimeout(function(){t.classList.remove("on")},1800);
+}
+function fmtClock(sec){
+  sec=Math.max(0,Math.round(sec));
+  var h=Math.floor(sec/3600), m=Math.floor(sec%3600/60), s=sec%60;
+  var p=function(n){return n<10?"0"+n:""+n};
+  return h+":"+p(m)+":"+p(s);
+}
+function fmtDur(sec){
+  sec=Math.max(0,Math.round(sec));
+  var m=Math.round(sec/60);
+  return m>=60? (Math.floor(m/60)+" 小时 "+(m%60)+" 分") : (m+" 分钟");
+}
+function store(key,val){
+  try{ if(val===undefined) return JSON.parse(localStorage.getItem(key)||"null");
+       localStorage.setItem(key,JSON.stringify(val)); }catch(e){ return null; }
+}
+function drop(key){ try{localStorage.removeItem(key)}catch(e){} }
+
+// 图片按 data-k 键在客户端解析（大幅压缩文件体积）
+function imgUri(k){ return (window.__IMGS__ && window.__IMGS__[k]) || ""; }
+function resolveImgs(root){
+  var list=$$("img[data-k]",root||document);
+  for(var i=0;i<list.length;i++){
+    var k=list[i].getAttribute("data-k");
+    var u=imgUri(k);
+    if(u) list[i].src=u; else list[i].replaceWith(document.createTextNode("［图片缺失］"));
+  }
+}
+
+/* ---------------- scoring ---------------- */
+// 单选：全对得分。多选/不定项：与答案完全一致得分；若所选全为正确项但漏选，按选中比例给部分分（自测辅助）。
+function questionScore(q, a, perQ){
+  if(!a) return {score:0, kind:"blank"};
+  if(a===q.answer) return {score:perQ, kind:"right"};
+  var ans=q.answer.split(""), sel=a.split("");
+  if(ans.length>1 && sel.length>0 && sel.every(function(k){return ans.indexOf(k)>=0})){
+    return {score:perQ*(sel.length/ans.length), kind:"partial"};
+  }
+  return {score:0, kind:"wrong"};
+}
+
+function grade(paper, answers){
+  var mods=[], totalPts=0, gotPts=0, right=0, done=0, all=0;
+  paper.modules.forEach(function(m){
+    var cnt=0;
+    eachQuestion(m,function(q){ if(!q.missingImage) cnt++; });
+    var perQ = cnt ? m.pointsOf / cnt : 0;
+    var st={label:m.label,count:m.count,answerable:cnt,points:m.pointsOf,perQ:perQ,right:0,wrong:0,blank:0,partial:0,got:0};
+    eachQuestion(m,function(q){
+      if(q.missingImage) return;
+      all++;
+      var a=answers[q.no]||"";
+      if(a) done++;
+      var r=questionScore(q,a,perQ);
+      st.got+=r.score;
+      if(r.kind==="right"){st.right++;right++;}
+      else if(r.kind==="blank"){st.blank++;}
+      else if(r.kind==="partial"){st.partial++;}
+      else {st.wrong++;}
+    });
+    st.got=Math.round(st.got*10)/10;
+    totalPts+=m.pointsOf; gotPts+=st.got;
+    mods.push(st);
+  });
+  return {mods:mods,total:Math.round(totalPts*10)/10,got:Math.round(gotPts*10)/10,right:right,done:done,all:all};
+}
+function eachQuestion(m,fn){
+  if(!m || !m.items) return;
+  m.items.forEach(function(it){
+    if(it.type==="material") it.questions.forEach(fn);
+    else fn(it);
+  });
+}
+
+/* ---------------- state ---------------- */
+var state={
+  pi:0, duration:120*60, remain:120*60, paused:false,
+  answers:{}, submitted:false, used:0, lastTick:Date.now(), lastActive:Date.now(), started:false
+};
+var tickTimer=null;
+
+function paper(){return BUNDLE.papers[state.pi]}
+function skey(){return "xingce/"+(BUNDLE.papers[0].key||"paper")+"/"+state.pi}
+
+function save(){
+  store(skey(),{
+    answers:state.answers, submitted:state.submitted, used:state.used,
+    remain:state.remain, duration:state.duration, paused:state.paused, pi:state.pi
+  });
+}
+function load(){
+  var s=store(skey());
+  if(!s) return false;
+  state.answers=s.answers||{};
+  state.submitted=!!s.submitted;
+  state.used=s.used||0;
+  state.remain=typeof s.remain==="number"?s.remain:state.duration;
+  state.duration=s.duration||state.duration;
+  state.paused=false;
+  return true;
+}
+
+/* ---------------- timer ---------------- */
+function startTimer(){
+  stopTimer();
+  state.lastActive=Date.now();
+  tickTimer=setInterval(function(){
+    var now=Date.now();
+    if(state.submitted||state.paused){state.lastActive=now;state.lastTick=now;return}
+    var d=(now-state.lastTick)/1000;
+    state.lastTick=now; state.lastActive=now;
+    state.remain-=d; state.used+=d;
+    if(state.remain<=0){state.remain=0;renderClock();doSubmit(true);return}
+    renderClock();
+  },250);
+}
+function stopTimer(){ if(tickTimer){clearInterval(tickTimer);tickTimer=null} }
+function renderClock(){
+  var c=$("#clock"), box=$("#timerBox");
+  c.textContent=fmtClock(state.remain);
+  box.classList.remove("warn","half");
+  if(state.remain<=300) box.classList.add("warn");
+  else if(state.remain<=state.duration*0.25) box.classList.add("half");
+  $("#pauseBtn").textContent=state.paused?"继续":"暂停";
+}
+
+/* ---------------- render ---------------- */
+function optionKeys(q){return Object.keys(q.options).filter(function(k){return q.options[k]!==""}).sort()}
+
+function renderPaper(){
+  var p=paper();
+  var h=[];
+  h.push('<div class="paper-head"><h1>'+esc(p.title)+'</h1><div class="meta">'
+    +'<span>共 '+p.total+' 题</span><span>满分 100 分</span>'
+    +(p.affected&&p.affected.length?'<span style="color:#8a6414">其中 '+p.affected.length+' 题缺图不计分</span>':'')
+    +'<span>题量分布：'+p.modules.map(function(m){return m.label+" "+m.count+" 题"}).join(" · ")+'</span>'
+    +'</div><div class="tips">说明：本卷题目与解析来自公开行测真题题库整理，用于离线自测。'
+    +'答案、解析在交卷后统一显示；可随时暂停或提前交卷。分值按国考行测常规模块分值（政治理论 10、常识判断 10、言语理解 24、数量关系 12、判断推理 28、资料分析 16）'
+    +'在有效题目上等比例折算，满分 100 分。</div></div>');
+
+  p.modules.forEach(function(m){
+    h.push('<div class="section-head"><h2>'+esc(m.label)+'</h2><span class="n">'+m.count+' 题 · 共 '+m.pointsOf+' 分'
+      +(m.count!==m.answerable?' （'+m.answerable+' 题计分）':'')+'</span></div>');
+    m.items.forEach(function(it){
+      if(it.type==="material"){
+        h.push('<div class="material"><div class="mtitle">材料</div>'+esc(it.material)+'</div>');
+        it.questions.forEach(function(q){h.push(questionHtml(q))});
+      } else h.push(questionHtml(it));
+    });
+  });
+  $("#main").innerHTML=h.join("");
+  resolveImgs($("#main"));
+}
+
+function questionHtml(q){
+  var p=paper();
+  var sel=state.answers[q.no]||"";
+  var multi=q.answer.length>1;
+  var selArr=sel.split("");
+  var o=['<div class="q'+(multi?' isMulti':'')+'" id="q'+q.no+'" data-no="'+q.no+'">'];
+  o.push('<div class="qhead"><span class="num">'+q.no+'</span>'
+    +(q.cat?'<span class="tag">'+esc(q.cat)+'</span>':'')
+    +(multi?'<span class="tag multi">多选 · '+q.answer.length+' 项</span>':'')
+    +(q.missingImage?'<span class="tag warn">缺图·不计分</span>':'')
+    +'<span class="flag" id="flag'+q.no+'"></span></div>');
+  o.push('<div class="stem">'+esc(q.stem)+'</div>');
+  if(q.missingImage) o.push('<div class="note">本题原卷含图片（图形/材料图），公开题库中该图片缺失，无法作答，本题不计入总分。</div>');
+  if(q.sourceNote) o.push('<div class="note src">'+esc(q.sourceNote)+'</div>');
+  if(q.redacted) o.push('<div class="note src">本题题干在公开题库中被特殊符号遮挡（如 ******），可能与原卷有出入，仅作参考。</div>');
+  o.push('<div class="opts" id="opts'+q.no+'">');
+  optionKeys(q).forEach(function(k){
+    var on=selArr.indexOf(k)>=0;
+    o.push('<label class="opt'+(on?' on':'')+'" data-k="'+k+'">'
+      +'<input type="'+(multi?'checkbox':'radio')+'" name="q'+q.no+'" value="'+k+'"'+(on?' checked':'')+'>'
+      +'<span class="k">'+k+'</span><span class="v">'+esc(q.options[k])+'</span>'
+      +'<span class="mk" id="mk'+q.no+k+'"></span></label>');
+  });
+  o.push('</div>');
+  o.push('<div class="expl hidden" id="ex'+q.no+'"></div>');
+  o.push('</div>');
+  return o.join("");
+}
+
+function renderCard(){
+  var p=paper(), c=$("#card"), out=[];
+  p.modules.forEach(function(m){
+    eachQuestion(m,function(q){
+      var cls="";
+      var a=state.answers[q.no]||"";
+      if(state.submitted){
+        if(a){
+          if(a===q.answer) cls="ok";
+          else cls=(q.answer.length>1 && a.split("").every(function(k){return q.answer.indexOf(k)>=0}))?"multi":"no";
+        }
+      } else if(a) cls="done";
+      out.push('<button class="cell '+cls+'" data-jump="'+q.no+'" title="第 '+q.no+' 题">'+q.no+'</button>');
+    });
+  });
+  c.innerHTML=out.join("");
+}
+
+function renderProgress(){
+  var p=paper(), done=0, all=0, per={};
+  p.modules.forEach(function(m){
+    var d=0;
+    eachQuestion(m,function(q){
+      if(q.missingImage)return;
+      all++; if(state.answers[q.no]){done++;d++}
+    });
+    per[m.label]=d+"/"+m.answerable;
+  });
+  $("#doneN").textContent=done;
+  $("#allN").textContent=all;
+  $("#barFill").style.width=(all?done/all*100:0)+"%";
+  $("#modProgress").innerHTML=p.modules.map(function(m){
+    return '<div>'+esc(m.label)+'：<b>'+per[m.label]+'</b></div>';
+  }).join("");
+  if(state.submitted){
+    var g=grade(p,state.answers);
+    $("#scoreLive").innerHTML='得分 <b>'+g.got+'</b> / 100（正确 '+g.right+' 题）';
+  } else {
+    $("#scoreLive").textContent="";
+  }
+}
+
+/* ---------------- interaction ---------------- */
+function bindMain(){
+  $("#main").addEventListener("change",function(e){
+    var input=e.target;
+    if(input.type!=="radio"&&input.type!=="checkbox")return;
+    if(state.submitted){input.checked=!input.checked;toast("已交卷，如需修改请点“重做本卷”");return}
+    var no=Number(input.name.slice(1));
+    var box=$("#opts"+no);
+    if(!box) return;
+    var pq=BUNDLE.papers[state.pi];
+    var q=null;
+    if(pq && pq.modules) pq.modules.forEach(function(mm){eachQuestion(mm,function(qq){if(qq.no===no)q=qq})});
+    var arr=[]; for(var i=0;i<box.querySelectorAll("input:checked").length;i++){arr.push(box.querySelectorAll("input:checked")[i].value)}
+    var sel=arr.sort().join("");
+    if(q && q.answer.length>1 && input.type==="checkbox" && sel.length>q.answer.length){
+      input.checked=false;
+      toast("本题为多选，最多选 "+q.answer.length+" 项（须与答案项数一致）");
+      return;
+    }
+    if(sel) state.answers[no]=sel; else delete state.answers[no];
+    var labels=box.querySelectorAll(".opt");
+    for(var j=0;j<labels.length;j++) labels[j].classList.toggle("on",sel.indexOf(labels[j].dataset.k)>=0);
+    renderCard();renderProgress();save();
+  });
+  $("#card").addEventListener("click",function(e){
+    var b=e.target.closest("[data-jump]"); if(!b)return;
+    var el=$("#q"+b.dataset.jump);
+    if(el) window.scrollTo({top:el.getBoundingClientRect().top+window.pageYOffset-92,behavior:"smooth"});
+  });
+  document.addEventListener("keydown",function(e){
+    if(e.target.tagName==="INPUT"&&e.target.type==="number")return;
+    if(/^[a-dA-D]$/.test(e.key)){
+      var cur=null;
+      $$(".q").forEach(function(el){
+        var r=el.getBoundingClientRect();
+        if(r.top<window.innerHeight*0.5 && r.bottom>80) cur=el;
+      });
+      if(!cur)return;
+      var no=cur.dataset.no;
+      var lab=$('.opt[data-k="'+e.key.toUpperCase()+'"]',$("#opts"+no));
+      if(lab){e.preventDefault();lab.querySelector("input").click();}
+    }
+  });
+}
+
+/* ---------------- grading / result ---------------- */
+function doSubmit(auto, silent){
+  var already=state.submitted;
+  stopTimer();
+  state.paused=false;
+  if(!already){ state.submitted=true; save(); }
+  var p=paper(), g=grade(p,state.answers);
+
+  // paint each question
+  p.modules.forEach(function(m){
+    var cnt=0;
+    eachQuestion(m,function(q){ if(!q.missingImage) cnt++; });
+    var perQ=cnt ? m.pointsOf/cnt : 0;
+    eachQuestion(m,function(q){
+      var el=$("#q"+q.no); if(!el)return;
+      var a=state.answers[q.no]||"";
+      var res=questionScore(q,a,perQ);
+      el.classList.add("locked");
+      if(res.kind==="right"){el.classList.add("correct"); $("#flag"+q.no).className="flag ok"; $("#flag"+q.no).textContent="✓ 正确 +"+perQ.toFixed(1)+"分";}
+      else if(res.kind==="blank"){el.classList.add("wrong"); $("#flag"+q.no).className="flag no"; $("#flag"+q.no).textContent=q.missingImage?"— 缺图不计分":"— 未作答";}
+      else if(res.kind==="partial"){el.classList.add("correct"); $("#flag"+q.no).className="flag ok"; $("#flag"+q.no).textContent="△ 漏选 +"+res.score.toFixed(1)+"分";}
+      else {el.classList.add("wrong"); $("#flag"+q.no).className="flag no"; $("#flag"+q.no).textContent="✗ 错误";}
+      $$(".opt",$("#opts"+q.no)).forEach(function(l){
+        var k=l.dataset.k;
+        var inAns=q.answer.indexOf(k)>=0, inSel=a.indexOf(k)>=0;
+        l.classList.remove("on");
+        if(inAns){l.classList.add("ans-ok"); $("#mk"+q.no+k).className="mk ok"; $("#mk"+q.no+k).textContent="正确答案";}
+        else if(inSel){l.classList.add("ans-bad"); $("#mk"+q.no+k).className="mk no"; $("#mk"+q.no+k).textContent="你的选择";}
+      });
+      var ex=$("#ex"+q.no);
+      ex.classList.remove("hidden");
+      ex.innerHTML='<div class="ansline">正确答案：'+q.answer+(a?'　你的答案：'+a:'　你的答案：未作答')
+        +(res.kind==="partial"?'　<span style="color:#b45309">漏选（按选中比例得 '+res.score.toFixed(1)+' 分）</span>':'')+'</div>'
+        +(q.missingImage?'<div class="missnote">本题原卷含图形/图片，公开题库中该图片缺失，因此本题不计入总分，仅供参看解析。</div>':'')
+        +(q.sourceNote?'<div class="missnote" style="background:#eef4ff;border-color:#c3d5f5;color:#2b4a7d">'+esc(q.sourceNote)+'</div>':'')
+        +(q.redacted?'<div class="missnote">本题题干在公开题库中被特殊符号遮挡，可能与原卷有出入，仅作参考。</div>':'')
+        +'<div class="eh">解析</div>'+(q.explanation&&q.explanation.length>3?q.explanation:'<p>（本题在公开题库中暂无有效解析）</p>');
+    });
+  });
+
+  // result panel
+  var acc=g.all?(g.right/g.all*100).toFixed(1):"0.0";
+  var level, lvcls;
+  if(g.got>=80){level="优秀：已达到国考行测进面常见水平，保持手感即可";lvcls="ok"}
+  else if(g.got>=70){level="良好：基础扎实，重点补短板模块可再提 5~10 分";lvcls="ok"}
+  else if(g.got>=60){level="及格线附近：需要专攻正确率最低的模块";lvcls="mid"}
+  else {level="待提升：建议先分模块限时刷题，再回头做整套";lvcls="no"}
+
+  var rows=g.mods.map(function(s){
+    var rate=s.count-s.blank? (s.right/(s.count-s.blank)*100):0;
+    var cls=rate>=75?"ok":rate>=60?"mid":"no";
+    var att=s.answerable-s.blank? (s.right/(s.answerable-s.blank)*100):0;
+    return '<tr><td>'+esc(s.label)+'</td><td>'+s.count+(s.answerable!==s.count?'<span style="color:#8a6414">（'+s.answerable+'）</span>':'')+'</td><td>'+s.points+'</td>'
+      +'<td>'+s.right+'</td><td>'+s.partial+'</td><td>'+s.wrong+'</td><td>'+s.blank+'</td>'
+      +'<td>'+s.got.toFixed(1)+'</td><td><span class="pill '+cls+'">'+att.toFixed(0)+'%</span></td></tr>';  }).join("");
+
+  var bars=g.mods.map(function(s){
+    var pct=s.points? Math.min(100,s.got/s.points*100):0;
+    return '<div class="mrow"><span class="mlab">'+esc(s.label)+'</span>'
+      +'<span class="mtrack"><i class="mfill" style="width:'+pct.toFixed(1)+'%"></i></span>'
+      +'<span class="mval">'+s.got.toFixed(1)+' / '+s.points+'</span></div>';
+  }).join("");
+
+  var html='<div class="result" id="resultTop">'
+    +'<div class="score-row">'
+    +'<div class="dial" style="--p:'+g.got.toFixed(1)+'"><div class="v"><b>'+g.got.toFixed(1)+'</b><span>总分 / 100</span></div></div>'
+    +'<div class="score-facts">'
+    +'<div class="fact"><span>正确题数</span><b>'+g.right+' / '+g.all+'</b></div>'
+    +'<div class="fact"><span>正确率</span><b>'+acc+'%</b></div>'
+    +'<div class="fact"><span>用时</span><b>'+fmtDur(state.used)+'</b></div>'
+    +'<div class="fact"><span>交卷方式</span><b>'+(auto?"时间到自动交卷":"主动交卷")+'</b></div>'
+    +'</div></div>'
+    +'<div class="verdict"><b>评级：</b>'+level+'</div>'
+    +'<table class="mods"><thead><tr><th>模块</th><th>题量（计分）</th><th>满分</th><th>对</th><th>漏选</th><th>错</th><th>未答</th><th>得分</th><th>答对率</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table>'
+    +'<h3 style="font-size:13.5px;color:#667085;margin:18px 0 8px">模块得分率</h3><div class="modchart">'+bars+'</div>'
+    +'<div class="tips" style="margin-top:14px">下方每道题已标出<b>正确答案、你的选择与官方解析</b>；答题卡中<span style="color:#12925a;font-weight:700">绿色为答对</span>、<span style="color:#d2372e;font-weight:700">红色为答错</span>。答对率 = 答对题数 ÷ 已作答题数（不含未作答）。</div>'
+    +'</div>';
+
+  $("#main").insertAdjacentHTML("afterbegin",html);
+  renderCard();renderProgress();renderClock();
+  $("#submitBtn").disabled=true;
+  window.scrollTo({top:0,behavior:already?"auto":"smooth"});
+  if(!silent) toast(auto?"时间到，已自动交卷评分":"已交卷评分");
+}
+
+/* ---------------- dialogs ---------------- */
+function openDialog(html){$("#dialog").innerHTML=html;$("#mask").classList.add("on")}
+function closeDialog(){$("#mask").classList.remove("on")}
+$("#mask").addEventListener("click",function(e){if(e.target===$("#mask"))closeDialog()});
+
+function askSubmit(){
+  if(state.submitted){toast("本卷已交卷");return}
+  var p=paper(), all=0, done=0;
+  p.modules.forEach(function(m){eachQuestion(m,function(q){all++;if(state.answers[q.no])done++})});
+  openDialog('<h3>确认交卷？</h3><p>共 '+all+' 题，已作答 <b>'+done+'</b> 题，未作答 <b>'+(all-done)+'</b> 题。交卷后将立即显示答案与解析，并自动评分。</p>'
+    +'<div class="actions"><button class="btn" data-x="cancel">继续答题</button><button class="btn primary" data-x="ok">确认交卷</button></div>');
+  $("#dialog").onclick=function(e){
+    var b=e.target.closest("[data-x]"); if(!b)return;
+    if(b.dataset.x==="ok"){closeDialog();doSubmit(false)}else closeDialog();
+  };
+}
+
+function askRetry(){
+  openDialog('<h3>重做本卷</h3><p>清空本卷所有作答记录并重新计时，答案与解析会重新隐藏。确定吗？</p>'
+    +'<div class="actions"><button class="btn" data-x="cancel">取消</button><button class="btn danger" data-x="ok">清空重做</button></div>');
+  $("#dialog").onclick=function(e){
+    var b=e.target.closest("[data-x]"); if(!b)return;
+    if(b.dataset.x==="ok"){closeDialog();resetPaper(true)}else closeDialog();
+  };
+}
+
+function openSettings(){
+  openDialog('<h3>考试设置</h3>'
+    +'<div class="rows">'
+    +'<div class="row"><label>考试时长</label><input type="number" id="durMin" min="5" max="300" value="'+Math.round(state.duration/60)+'" style="width:90px"> 分钟'
+    +'<span style="color:#667085;font-size:12.5px">（国考行测通常 120 分钟）</span></div>'
+    +'<div class="row"><label>快捷选择</label>'
+    +'<button class="btn" data-d="90">90 分钟</button><button class="btn" data-d="120">120 分钟</button><button class="btn" data-d="150">150 分钟</button></div>'
+    +'<p>提示：设置仅对本次未交卷状态生效；倒计时结束会自动交卷评分。作答进度自动保存在本机浏览器中，关闭页面后再次打开可继续。</p>'
+    +'</div>'
+    +'<div class="actions"><button class="btn" data-x="cancel">取消</button><button class="btn primary" data-x="ok">保存并重新计时</button></div>');
+  $("#dialog").onclick=function(e){
+    var d=e.target.closest("[data-d]");
+    if(d){$("#durMin").value=d.dataset.d;return}
+    var b=e.target.closest("[data-x]"); if(!b)return;
+    if(b.dataset.x==="ok"){
+      var v=Number($("#durMin").value);
+      if(!v||v<5||v>300){toast("请输入 5~300 之间的分钟数");return}
+      state.duration=v*60; state.remain=v*60; state.used=0; state.paused=false;
+      save();closeDialog();renderClock();startTimer();toast("已按 "+v+" 分钟重新计时");
+    } else closeDialog();
+  };
+}
+
+function resetPaper(restart){
+  drop(skey());
+  state.answers={}; state.submitted=false; state.used=0; state.remain=state.duration; state.paused=false;
+  renderAll(); save();
+  if(restart){startTimer();toast("已重置本卷，重新计时")}
+}
+
+/* ---------------- paper switching ---------------- */
+function renderPicker(){
+  var box=$("#paperPick");
+  if(BUNDLE.papers.length<2){box.innerHTML="";return}
+  box.innerHTML='<span>切换试卷</span><select id="paperSel">'
+    +BUNDLE.papers.map(function(p,i){return '<option value="'+i+'"'+(i===state.pi?" selected":"")+'>'+esc(p.title)+'</option>'}).join("")
+    +'</select>';
+  box.querySelector("select").addEventListener("change",function(e){
+    stopTimer();
+    state.pi=Number(e.target.value);
+    state.answers={};state.submitted=false;state.used=0;state.remain=state.duration;state.paused=false;
+    state.started=false;
+    load();
+    renderAll();
+    $("#submitBtn").disabled=state.submitted;
+    startTimer();
+    window.scrollTo({top:0});
+    toast("已切换到 "+paper().title);
+  });
+}
+
+function renderAll(){
+  renderPaper(); renderCard(); renderProgress(); renderClock();
+  $("#submitBtn").disabled=state.submitted;
+  $("#pauseBtn").disabled=state.submitted;
+}
+
+/* ---------------- boot ---------------- */
+function boot(){
+  if(!BUNDLE||!BUNDLE.papers||!BUNDLE.papers.length){
+    $("#main").innerHTML='<div class="result">题库数据缺失。</div>';return;
+  }
+  renderPicker();
+  var had=load();
+  renderAll();
+  bindMain();
+  $("#submitBtn").addEventListener("click",askSubmit);
+  $("#retryBtn").addEventListener("click",askRetry);
+  $("#cardBtn").addEventListener("click",function(){
+    var s=$("#side");
+    window.scrollTo({top:s.getBoundingClientRect().top+window.pageYOffset-96,behavior:"smooth"});
+  });
+  $("#settingsBtn").addEventListener("click",openSettings);
+  $("#pauseBtn").addEventListener("click",function(){
+    if(state.submitted)return;
+    state.paused=!state.paused;
+    state.lastTick=Date.now();
+    renderClock(); save();
+    toast(state.paused?"已暂停计时":"继续计时");
+  });
+  if(state.submitted){
+    doSubmit(true, true);   // re-paint graded view without re-saving or toasting
+  } else {
+    state.lastTick=Date.now();
+    startTimer();
+  }
+  window.addEventListener("beforeunload",save);
+  document.addEventListener("visibilitychange",function(){
+    if(document.hidden){state.lastTick=Date.now();save()}
+    else if(!state.submitted&&!state.paused){state.lastTick=Date.now()}
+  });
+  if(!had) save();
+}
+boot();
+})();
+</script>
+</body>
+</html>
