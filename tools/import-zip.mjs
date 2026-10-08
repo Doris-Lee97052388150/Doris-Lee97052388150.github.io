@@ -261,12 +261,19 @@ function loadManifest() {
 
 function saveManifest(m) {
   m.version = 1;
-  m.updatedAt = new Date().toISOString();
   m.apps.sort(function (a, b) {
     return String(b.importedAt || '').localeCompare(String(a.importedAt || ''));
   });
+  // 内容没变就不写文件，否则 GitHub Actions 每次都会产出无意义的空提交
+  let prevApps = null;
+  try {
+    prevApps = JSON.stringify(JSON.parse(fs.readFileSync(MANIFEST_PATH, 'utf8')).apps);
+  } catch (e) { /* 文件不存在或损坏，按需要写入处理 */ }
+  if (prevApps === JSON.stringify(m.apps)) return false;
+  m.updatedAt = new Date().toISOString();
   fs.mkdirSync(APPS_DIR, { recursive: true });
   fs.writeFileSync(MANIFEST_PATH, JSON.stringify(m, null, 2) + '\n', 'utf8');
+  return true;
 }
 
 function uniqueSlug(manifest, baseSlug, sourceName) {
@@ -385,7 +392,12 @@ function main() {
     for (const n of found) zips.push(path.join(INCOMING_DIR, n));
   }
 
-  if (!zips.length) { printHelp(); process.exitCode = 1; return; }
+  if (!zips.length) {
+    if (args.incoming) { console.log('没有需要导入的 zip，正常结束。'); return; }
+    printHelp();
+    process.exitCode = 1;
+    return;
+  }
 
   let ok = 0, failed = 0;
   for (const z of zips) {
@@ -400,8 +412,10 @@ function main() {
     }
   }
 
-  saveManifest(manifest);
-  console.log('manifest 已更新: apps/manifest.json（共 ' + manifest.apps.length + ' 个应用）');
+  const changed = saveManifest(manifest);
+  console.log(changed
+    ? 'manifest 已更新: apps/manifest.json（共 ' + manifest.apps.length + ' 个应用）'
+    : 'manifest 无变化，未写入。');
   if (failed) { console.error(failed + ' 个包导入失败，' + ok + ' 个成功。'); process.exitCode = 1; }
 }
 
