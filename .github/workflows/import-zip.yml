@@ -1,0 +1,46 @@
+name: Import zip packages
+
+# 把 zip 丢进 _incoming/，这里会自动解压到 apps/ 并更新 manifest，
+# 然后提交回 main；Pages 会跟着重新部署。
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '_incoming/**'
+      - 'tools/import-zip.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: import-zip
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Extract zip packages into apps/
+        run: node tools/import-zip.mjs --all-incoming
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps
+          if git diff --staged --quiet; then
+            echo "没有变化，无需提交。"
+            exit 0
+          fi
+          git commit -m "chore: 自动导入 _incoming/ 中的网页包"
+          git push

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SillyTavern 远端入口 · Doris Lee</title>
+<meta name="theme-color" content="#12213b">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<div class="hero">
+  <a class="backlink" href="../">← 返回个人主页</a>
+  <h1>SillyTavern 远端入口</h1>
+  <p>手机随时接入跑在电脑上的 SillyTavern<br>地址由 Cloudflare 隧道映射，可一键更新</p>
+</div>
+<div class="wrap">
+
+  <div class="card">
+    <span class="tagline">当前状态</span>
+    <h2 id="urlTitle">未设置地址</h2>
+    <div style="margin-top:6px">
+      <div class="kvline"><span>地址</span><span id="urlValue">—</span></div>
+      <div class="kvline"><span>来源</span><span id="urlSource">—</span></div>
+      <div class="kvline"><span>状态</span><span><span class="pill idle" id="statusPill">未检测</span></span></div>
+    </div>
+    <div class="btnrow" style="margin-top:16px">
+      <a class="btn" id="openBtn" href="#" target="_blank" rel="noopener noreferrer">打开 SillyTavern</a>
+      <button class="btn ghost" id="checkBtn" type="button">检测连接</button>
+      <button class="btn ghost" id="copyBtn" type="button">复制地址</button>
+      <button class="btn ghost" id="frameBtn" type="button">页面内打开</button>
+    </div>
+  </div>
+
+  <div class="note">
+    <h3>手动设置地址</h3>
+    隧道的临时地址每次重启都会变。如果电脑上的脚本没能自动同步，把新地址粘贴到这里即可；
+    这个设置只保存在你当前浏览器里（iPhone 上会一直记住）。
+    <div class="field">
+      <input type="url" id="urlInput" placeholder="https://xxxx-xxxx.trycloudflare.com" autocomplete="off">
+      <button class="btn" id="saveBtn" type="button">保存</button>
+      <button class="btn ghost" id="clearBtn" type="button">清除</button>
+    </div>
+  </div>
+
+  <div class="frame-wrap" id="frameWrap" hidden>
+    <iframe id="frame" title="SillyTavern" referrerpolicy="no-referrer"></iframe>
+  </div>
+
+  <div class="note">
+    <h3>怎么让手机连上（三步）</h3>
+    <ol>
+      <li><b>电脑上启动 SillyTavern</b>：先让它在 <code>localhost:8000</code> 正常打开。</li>
+      <li><b>启动隧道</b>：双击仓库里的 <code>tools/st-tunnel.ps1</code>，它会自动下载 cloudflared、开启隧道，
+          并把生成的地址写入本页。也可以手动运行：<br>
+          <code>cloudflared tunnel --url http://localhost:8000</code></li>
+      <li><b>手机上打开本页</b>：点「打开 SillyTavern」即可。地址会自动从 <code>sillytavern/url.json</code> 读取。</li>
+    </ol>
+  </div>
+
+  <div class="note">
+    <h3>为什么这里只是一个「入口页」？</h3>
+    因为本站是 <b>GitHub Pages 静态托管</b>，只能存放 HTML / 图片等静态文件，无法运行程序，也无法反向代理你电脑上的服务。
+    所以正确做法是：SillyTavern 仍然跑在你的电脑上，用 Cloudflare 隧道把它安全地映射到公网，
+    本页只负责保存并跳转到那个地址——效果和「映射上来」是一样的，手机上点一下就能用。
+    <br><br>
+    <b>安全提示：</b>隧道地址一旦公开，任何人都能访问。请务必在 SillyTavern 的 <code>config.yaml</code> 里
+    开启 <code>basicAuthMode</code> 并设置用户名密码，不要裸奔。
+  </div>
+
+</div>
+
+<div class="footer">
+  <a href="../">返回个人主页</a> · <a href="../apps/">网页应用</a>
+</div>
+
+<script src="../assets/site.js"></script>
+<script>
+(function () {
+  'use strict';
+  var KEY = 'st_tunnel_url';
+  var el = {
+    title: document.getElementById('urlTitle'),
+    value: document.getElementById('urlValue'),
+    source: document.getElementById('urlSource'),
+    pill: document.getElementById('statusPill'),
+    open: document.getElementById('openBtn'),
+    input: document.getElementById('urlInput'),
+    frameWrap: document.getElementById('frameWrap'),
+    frame: document.getElementById('frame')
+  };
+  var current = '';
+
+  function normalize(u) {
+    u = String(u || '').trim();
+    if (!u) return '';
+    if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    return u.replace(/\/+$/, '');
+  }
+
+  function status(kind, text) {
+    el.pill.className = 'pill ' + kind;
+    el.pill.textContent = text;
+  }
+
+  function render(u, source) {
+    current = u;
+    if (!u) {
+      el.title.textContent = '未设置地址';
+      el.value.textContent = '—';
+      el.source.textContent = '—';
+      status('idle', '未设置');
+      el.open.setAttribute('href', '#');
+      el.open.setAttribute('aria-disabled', 'true');
+      el.frameWrap.hidden = true;
+      return;
+    }
+    el.title.textContent = '可以使用';
+    el.value.textContent = u;
+    el.source.textContent = source || '手动设置';
+    status('idle', '未检测');
+    el.open.setAttribute('href', u);
+    el.open.removeAttribute('aria-disabled');
+  }
+
+  function save(u) {
+    try { localStorage.setItem(KEY, u); } catch (e) {}
+    render(u, '本机设置');
+  }
+
+  function load() {
+    var stored = '';
+    try { stored = localStorage.getItem(KEY) || ''; } catch (e) {}
+    if (stored) { render(normalize(stored), '本机设置'); el.input.value = stored; return; }
+
+    fetch('url.json', { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (j) {
+        var u = normalize(j && j.url);
+        if (u) { render(u, 'url.json' + (j.updatedAt ? '（' + String(j.updatedAt).slice(0, 16).replace('T', ' ') + '）' : '')); }
+        else { render('', ''); }
+      })
+      .catch(function () { render('', ''); });
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', function () {
+    var u = normalize(el.input.value);
+    if (!u) { el.input.focus(); return; }
+    el.input.value = u;
+    save(u);
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', function () {
+    try { localStorage.removeItem(KEY); } catch (e) {}
+    el.input.value = '';
+    load();
+  });
+
+  document.getElementById('copyBtn').addEventListener('click', function () {
+    if (!current) return;
+    var done = function (ok) {
+      var btn = document.getElementById('copyBtn');
+      var old = btn.textContent;
+      btn.textContent = ok ? '已复制' : '复制失败';
+      setTimeout(function () { btn.textContent = old; }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(current).then(function () { done(true); }, function () { done(false); });
+    } else {
+      done(false);
+    }
+  });
+
+  document.getElementById('checkBtn').addEventListener('click', function () {
+    if (!current) { status('warn', '请先设置地址'); return; }
+    status('idle', '检测中…');
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); }, 12000);
+    fetch(current, { mode: 'no-cors', cache: 'no-store', signal: ctrl.signal })
+      .then(function () { clearTimeout(timer); status('ok', '可访问'); })
+      .catch(function () { clearTimeout(timer); status('bad', '无法访问'); });
+  });
+
+  document.getElementById('frameBtn').addEventListener('click', function () {
+    if (!current) { status('warn', '请先设置地址'); return; }
+    if (el.frameWrap.hidden) {
+      el.frame.src = current;
+      el.frameWrap.hidden = false;
+      el.frameWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      el.frameWrap.hidden = true;
+      el.frame.src = 'about:blank';
+    }
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>

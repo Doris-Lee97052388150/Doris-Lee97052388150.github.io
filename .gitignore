@@ -1,0 +1,8 @@
+# cloudflared 二进制（由 tools/st-tunnel.ps1 自动下载，不要提交）
+tools/bin/
+
+# 日志与临时文件
+*.log
+_import-log.txt
+.DS_Store
+Thumbs.db

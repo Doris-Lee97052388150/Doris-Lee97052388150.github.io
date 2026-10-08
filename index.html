@@ -2,90 +2,70 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>行测真题离线模拟考场 · 总目录</title>
-<style>
-:root{--ink:#1b2431;--sub:#667085;--line:#e2e6ef;--brand:#1f6feb}
-*{box-sizing:border-box}
-body{margin:0;background:#eef1f6;color:var(--ink);min-height:100vh;
-  font:15px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif}
-.hero{background:linear-gradient(120deg,#12213b,#28477a 58%,#1f6feb);color:#fff;padding:52px 22px 46px;text-align:center}
-.hero h1{margin:0 0 10px;font-size:29px;letter-spacing:.5px}
-.hero p{margin:0;opacity:.88;font-size:14.5px;line-height:1.9}
-.wrap{max-width:1000px;margin:-26px auto 0;padding:0 18px 60px}
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media(max-width:760px){.cards{grid-template-columns:1fr}}
-.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 8px 28px rgba(16,24,40,.09);display:flex;flex-direction:column}
-.card h2{margin:0 0 8px;font-size:18px}
-.card .tagline{display:inline-block;font-size:11.5px;background:#e8f0fe;color:#1a4fa0;border-radius:20px;padding:2px 10px;margin-bottom:10px;font-weight:700}
-.card p{margin:0 0 14px;color:var(--sub);font-size:13.5px;line-height:1.85;flex:1}
-.card .kv{font-size:13px;color:#475467;margin-bottom:14px}
-.card .kv b{color:var(--ink)}
-a.go{display:inline-block;background:var(--brand);color:#fff;text-decoration:none;padding:10px 18px;border-radius:10px;font-weight:700;font-size:14px;text-align:center}
-a.go:hover{background:#1a5ed6}
-a.go.ghost{background:#fff;color:var(--brand);border:1px solid #c9dcfb;margin-top:8px}
-a.go.ghost:hover{background:#e8f0fe}
-.tip{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;font-size:13.5px;color:var(--sub);line-height:1.95;margin-top:20px}
-.tip b{color:var(--ink)}
-.tip h3{margin:0 0 8px;font-size:14.5px;color:var(--ink)}
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Doris Lee · 个人主页</title>
+<meta name="description" content="个人主页：行测真题模拟考场、SillyTavern 远端入口、网页应用托管与导入。">
+<meta name="theme-color" content="#12213b">
+<link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
 <div class="hero">
-  <h1>行测真题离线模拟考场</h1>
-  <p>2019–2026 年国考 + 主要省考/联考真题 · 共 333 份卷子<br>打开即做题：右上角倒计时、交卷自动判分、逐题官方解析，全程离线</p>
+  <h1>Doris Lee</h1>
+  <p>个人主页 · 题库 / 工具 / 网页应用<br>点开即用，手机和电脑都能访问</p>
 </div>
 <div class="wrap">
+
+  <div class="section-title">站点导航</div>
   <div class="cards">
     <div class="card">
-      <span class="tagline">推荐</span>
-      <h2>完整题库 · 333 份卷子</h2>
-      <p>2019–2026 年国考（副省级 / 地市级 / 行政执法）与江苏、浙江、广东、上海、北京、山东、四川、湖北等主要省考及联考。
-      带搜索、年份与来源筛选、模块齐缺标记；另有 58 个「年份+来源」合集包，一个文件内可切换多套卷。</p>
-      <div class="kv">合计 <b>38808 道题</b> · <b>333 份卷子</b> · 图片随站提供</div>
-      <a class="go" href="真题卷/">打开题库总目录</a>
+      <span class="tagline">题库</span>
+      <h2>行测真题模拟考场</h2>
+      <p>2019–2026 年国考 + 主要省考/联考真题，共 333 份卷子、38808 道题。倒计时、交卷自动判分、逐题解析，全程离线可做。</p>
+      <div class="kv">333 份卷子 · 38808 道题</div>
+      <div class="btnrow"><a class="btn" href="xingce/">进入题库</a></div>
     </div>
     <div class="card">
-      <span class="tagline">精选精编</span>
-      <h2>国考五年 · 5 套小合集</h2>
-      <p>2023–2025 国考副省级、地市级五套卷打包成一个文件，体积极小（8.5 MB），右上角直接切换。
-      适合想立刻开做、不想在目录里挑的场景。</p>
-      <div class="kv">合计 <b>665 道题</b> · 单文件 <b>8.5 MB</b></div>
-      <a class="go" href="真题卷/合集-2025年-国考/">打开五年国考合集</a>
-      <a class="go ghost" href="README.md">查看使用说明</a>
+      <span class="tagline">工具</span>
+      <h2>SillyTavern 远端入口</h2>
+      <p>手机上随时接入跑在电脑上的 SillyTavern。通过 Cloudflare 隧道映射，蜂窝网络或任意 Wi-Fi 都能打开。</p>
+      <div class="kv">入口页 · 隧道地址可一键更新</div>
+      <div class="btnrow"><a class="btn" href="sillytavern/">打开入口</a></div>
+    </div>
+    <div class="card">
+      <span class="tagline">网页应用</span>
+      <h2>网页应用托管</h2>
+      <p>把你做好的静态网页 zip 包导入进来，自动解压并生成独立子页面，每个应用都有自己的网址。</p>
+      <div class="kv" id="appCount">加载中…</div>
+      <div class="btnrow">
+        <a class="btn" href="apps/">浏览应用</a>
+        <a class="btn ghost" href="import/">导入新网页包</a>
+      </div>
     </div>
   </div>
 
-  <div class="cards" style="margin-top:16px">
-    <div class="card">
-      <span class="tagline">不用开浏览器也行</span>
-      <h2>本地打开与保存</h2>
-      <p>在线版用的是图片外链（加载快、可被浏览器缓存）。如果你想<b>完全离线使用</b>，把仓库下载到本地即可：
-      每份卷子都是独立页面，双击 <code>真题卷/某份卷子/index.html</code> 就能做题，同目录下的 <code>img/</code> 会自动跟着加载，
-      拷到 U 盘或发邮件也不会丢图。</p>
-      <div class="kv">仓库根目录：<b>Doris-Lee97052388150.github.io</b> · 约 <b>280 MB</b></div>
-      <a class="go" href="https://github.com/Doris-Lee97052388150/Doris-Lee97052388150.github.io/archive/refs/heads/main.zip">下载整站 ZIP</a>
-      <a class="go ghost" href="README.md">查看说明</a>
-    </div>
-    <div class="card">
-      <span class="tagline">精选精编</span>
-      <h2>国考五年 · 5 套小合集</h2>
-      <p>2023–2025 国考副省级、地市级五套卷打包成一个文件，体积极小（8.5 MB），右上角直接切换。
-      适合想立刻开做、不想在目录里挑的场景。</p>
-      <div class="kv">合计 <b>665 道题</b> · 单文件 <b>8.5 MB</b></div>
-      <a class="go" href="真题卷/合集-2025年-国考/">打开五年国考合集</a>
-      <a class="go ghost" href="README.md">查看使用说明</a>
-    </div>
-  </div>
+  <div class="section-title">已导入的网页应用</div>
+  <div class="applist" id="appList"><div class="empty">正在加载…</div></div>
 
-  <div class="tip">
-    <h3>使用要点</h3>
-    <b>计时：</b>倒计时默认 120 分钟（国考标准），「设置」里可改 90 / 120 / 150 或自定义分钟数；剩 25% 变橙、最后 5 分钟红色闪烁，<b>时间到自动交卷评分</b>，也可随时「暂停」。<br>
-    <b>判分：</b>交卷后给出总分 /100、正确率、各模块得分与答对率，并逐题展开正确答案、你的选择与官方解析；答题卡绿=对、紫=多选漏选、红=错。<br>
-    <b>多选：</b>上海、北京等卷含多选/不定项题，会标「多选 · N 项」并显示复选框；完全选对得满分，漏选按选中比例给部分分（自测辅助，与官方细则可能不同）。<br>
-    <b>保存：</b>作答进度自动存在本机浏览器，关掉页面再打开可继续；「重做本卷」清空重来。<br>
-    <b>来源：</b>题目与解析来自公开行测真题题库（<a href="https://github.com/ERRRC/xingcezhenti">ERRRC/xingcezhenti</a>，网友回忆版），个别题面可能与原卷有字词差异；极少数题因原图缺失或题干被遮挡会单独标注。
+  <div class="note">
+    <h3>关于本站</h3>
+    <b>静态托管：</b>本站由 GitHub Pages 提供，纯静态、无后端。所有页面都是预先构建好的 HTML，浏览器直接打开，不需要服务器。<br>
+    <b>题库：</b>原首页内容已完整保留，并移到独立子页面 <a href="xingce/">xingce/</a>，功能和链接不变。<br>
+    <b>网页应用：</b>把 zip 包放进仓库的 <code>_incoming/</code> 目录，GitHub Actions 会自动解压到 <code>apps/</code> 下并生成子页面；
+    也可以在本机运行 <code>node tools/import-zip.mjs</code> 手动导入。<br>
+    <b>SillyTavern：</b>它是跑在你电脑上的服务，GitHub Pages 无法直接托管，所以这里提供的是一个「入口页」，
+    用 Cloudflare 隧道把电脑上的服务映射出来，手机点开即可使用。
   </div>
 </div>
+
+<div class="footer">
+  © <span id="yr"></span> Doris Lee · GitHub Pages 托管<br>
+  <a href="README.md">说明文档</a> · <a href="apps/">网页应用</a> · <a href="import/">导入网页包</a>
+</div>
+
+<script src="assets/site.js"></script>
+<script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+renderApps('appList');
+</script>
 </body>
 </html>

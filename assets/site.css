@@ -1,0 +1,82 @@
+/* ===== Doris Lee personal site · shared styles ===== */
+:root{
+  --ink:#1b2431; --sub:#667085; --line:#e2e6ef;
+  --brand:#1f6feb; --brand-dark:#1a5ed6; --brand-soft:#e8f0fe;
+  --bg:#eef1f6; --card:#fff;
+  --ok:#12925a; --bad:#d2372e; --warn:#b45309;
+  --radius:16px; --shadow:0 8px 28px rgba(16,24,40,.09);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);min-height:100vh;
+  font:15px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif}
+a{color:var(--brand)}
+code{background:#f1f4f9;border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;word-break:break-all}
+.hero{background:linear-gradient(120deg,#12213b,#28477a 58%,#1f6feb);color:#fff;padding:46px 22px 42px;text-align:center}
+.hero h1{margin:0 0 10px;font-size:28px;letter-spacing:.5px}
+.hero p{margin:0;opacity:.88;font-size:14.5px;line-height:1.9}
+.hero .backlink{display:inline-block;margin-bottom:16px;color:#fff;opacity:.85;text-decoration:none;font-size:13.5px;
+  border:1px solid rgba(255,255,255,.35);border-radius:20px;padding:4px 14px}
+.hero .backlink:hover{opacity:1;background:rgba(255,255,255,.12)}
+.wrap{max-width:1000px;margin:-26px auto 0;padding:0 18px 64px}
+.section-title{margin:30px 0 12px;font-size:15px;color:var(--sub);font-weight:700;letter-spacing:.4px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;
+  box-shadow:var(--shadow);display:flex;flex-direction:column}
+.card h2{margin:0 0 8px;font-size:18px}
+.card .tagline{display:inline-block;align-self:flex-start;font-size:11.5px;background:var(--brand-soft);color:#1a4fa0;
+  border-radius:20px;padding:2px 10px;margin-bottom:10px;font-weight:700}
+.card p{margin:0 0 14px;color:var(--sub);font-size:13.5px;line-height:1.85;flex:1}
+.card .kv{font-size:13px;color:#475467;margin-bottom:14px}
+.card .kv b{color:var(--ink)}
+.btnrow{display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-block;background:var(--brand);color:#fff;text-decoration:none;padding:10px 18px;border-radius:10px;
+  font-weight:700;font-size:14px;text-align:center;border:1px solid transparent;cursor:pointer;font-family:inherit}
+.btn:hover{background:var(--brand-dark)}
+.btn.ghost{background:#fff;color:var(--brand);border-color:#c9dcfb}
+.btn.ghost:hover{background:var(--brand-soft)}
+.btn.small{padding:7px 13px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.note{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;font-size:13.5px;color:var(--sub);
+  line-height:1.95;margin-top:20px}
+.note h3{margin:0 0 8px;font-size:14.5px;color:var(--ink)}
+.note b{color:var(--ink)}
+.note ol,.note ul{margin:8px 0 0;padding-left:20px}
+.note li{margin:5px 0}
+.field{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+input[type=text],input[type=url],select{flex:1;min-width:220px;padding:10px 12px;border:1px solid var(--line);
+  border-radius:10px;font:inherit;font-size:14px;background:#fff;color:var(--ink)}
+input[type=text]:focus,input[type=url]:focus{outline:2px solid var(--brand-soft);border-color:var(--brand)}
+.pill{display:inline-block;font-size:12px;font-weight:700;border-radius:20px;padding:3px 11px}
+.pill.ok{background:#e6f6ee;color:var(--ok)}
+.pill.bad{background:#fdecea;color:var(--bad)}
+.pill.warn{background:#fef3c7;color:var(--warn)}
+.pill.idle{background:#eef1f6;color:var(--sub)}
+.applist{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.appitem{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;
+  justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;box-shadow:0 2px 10px rgba(16,24,40,.05)}
+.appitem .meta{flex:1;min-width:200px}
+.appitem .meta b{display:block;font-size:15px;margin-bottom:3px}
+.appitem .meta span{font-size:12.5px;color:var(--sub)}
+.empty{background:#fff;border:1px dashed var(--line);border-radius:14px;padding:26px;text-align:center;color:var(--sub);font-size:13.5px}
+.drop{border:2px dashed #c9dcfb;border-radius:14px;background:#fff;padding:34px 20px;text-align:center;color:var(--sub);
+  font-size:14px;cursor:pointer;transition:.15s}
+.drop:hover,.drop.over{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.drop b{color:var(--ink)}
+.kvline{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+.kvline:last-child{border-bottom:0}
+.kvline span:last-child{color:var(--ink);font-weight:700;text-align:right;word-break:break-all}
+.filelist{max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff;
+  padding:10px 14px;font-size:12.5px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--sub)}
+.filelist div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frame-wrap{margin-top:16px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+.frame-wrap iframe{display:block;width:100%;height:70vh;min-height:420px;border:0}
+.footer{text-align:center;color:var(--sub);font-size:12.5px;padding:30px 18px 44px;line-height:2}
+.footer a{color:var(--sub);text-decoration:none;border-bottom:1px dotted #b8c0cc}
+@media(max-width:760px){
+  .hero{padding:34px 18px 32px}
+  .hero h1{font-size:23px}
+  .wrap{padding:0 14px 48px}
+  .frame-wrap iframe{height:60vh;min-height:340px}
+}

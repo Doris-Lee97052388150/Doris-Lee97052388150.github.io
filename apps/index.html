@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>网页应用 · Doris Lee</title>
+<meta name="theme-color" content="#12213b">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<div class="hero">
+  <a class="backlink" href="../">← 返回个人主页</a>
+  <h1>网页应用</h1>
+  <p>导入的静态网页包都在这里，每个应用一个独立子页面</p>
+</div>
+<div class="wrap">
+  <div class="section-title">已导入的应用</div>
+  <div class="applist" id="appList"><div class="empty">正在加载…</div></div>
+
+  <div class="note">
+    <h3>怎么导入新的网页包</h3>
+    <ul>
+      <li><b>方式一（推荐，手机也能做）：</b>把 zip 包上传到仓库的 <code>_incoming/</code> 目录，
+          GitHub Actions 会自动解压到 <code>apps/</code> 下并重新部署，几分钟后本页就会出现新应用。</li>
+      <li><b>方式二（本机）：</b>在本机仓库目录运行 <code>node tools/import-zip.mjs 你的包.zip</code>，
+          它会解压并更新 <code>apps/manifest.json</code>，然后提交推送即可。</li>
+      <li><b>先在浏览器里检查：</b>打开 <a href="../import/">导入页</a>，把 zip 拖进去可以直接预览内容、检查是否可用，再决定上传。</li>
+    </ul>
+  </div>
+</div>
+<div class="footer">
+  <a href="../">返回个人主页</a> · <a href="../import/">导入网页包</a>
+</div>
+<script src="../assets/site.js"></script>
+<script>renderApps('appList');</script>
+</body>
+</html>

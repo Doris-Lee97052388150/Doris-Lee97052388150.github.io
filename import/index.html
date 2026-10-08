@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>导入网页包 · Doris Lee</title>
+<meta name="theme-color" content="#12213b">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<div class="hero">
+  <a class="backlink" href="../">← 返回个人主页</a>
+  <h1>导入网页包</h1>
+  <p>把静态网页 zip 拖进来，检查内容、预览首页<br>再决定怎么变成线上子页面</p>
+</div>
+<div class="wrap">
+
+  <div class="card">
+    <span class="tagline">第一步</span>
+    <h2>选择 zip 包</h2>
+    <p>文件只在你自己的浏览器里解压，<b>不会上传到任何服务器</b>。</p>
+    <div class="drop" id="drop">把 zip 文件拖到这里，或点击这里选择文件</div>
+    <input type="file" id="file" accept=".zip,application/zip" hidden>
+    <div class="kvline" style="margin-top:12px"><span>状态</span><span id="status">等待选择文件</span></div>
+  </div>
+
+  <div class="card" id="resultCard" hidden style="margin-top:16px">
+    <span class="tagline">检查结果</span>
+    <h2 id="pkgName">—</h2>
+    <div id="checks" style="margin-top:6px"></div>
+    <div class="section-title">文件清单（最多显示 80 个）</div>
+    <div class="filelist" id="files"></div>
+  </div>
+
+  <div class="card" id="previewCard" hidden style="margin-top:16px">
+    <span class="tagline">预览</span>
+    <h2>页面预览</h2>
+    <p style="color:var(--sub);font-size:13.5px" id="previewNote">在浏览器里临时渲染这个包，确认能用再上传。</p>
+    <div class="btnrow">
+      <button class="btn" id="previewBtn" type="button">预览首页</button>
+      <a class="btn ghost" id="openTab" href="#" target="_blank" rel="noopener noreferrer">新标签页打开</a>
+    </div>
+    <div class="frame-wrap" id="frameWrap" hidden><iframe id="frame" title="预览"></iframe></div>
+  </div>
+
+  <div class="card" id="importCard" hidden style="margin-top:16px">
+    <span class="tagline">第二步</span>
+    <h2>把它变成子页面</h2>
+    <p>两种方式任选其一，效果一样。</p>
+
+    <div class="note" style="margin-top:0">
+      <h3>方式一 · 上传到仓库（手机也能做）</h3>
+      把 zip 上传到仓库的 <code>_incoming/</code> 目录，GitHub Actions 会自动解压到
+      <code>apps/<span id="slugInline">名称</span>/</code>、更新 manifest 并重新部署。
+      <div class="btnrow" style="margin-top:12px">
+        <a class="btn" id="uploadLink" href="#" target="_blank" rel="noopener noreferrer">打开上传页面</a>
+      </div>
+    </div>
+
+    <div class="note">
+      <h3>方式二 · 在本机运行</h3>
+      把 zip 放到仓库目录下，然后执行：
+      <div class="filelist" style="margin-top:10px" id="cmdBox"></div>
+      <div class="btnrow" style="margin-top:12px">
+        <button class="btn ghost" id="copyCmd" type="button">复制命令</button>
+      </div>
+    </div>
+
+    <div class="note">
+      <h3>将会写入 manifest 的记录</h3>
+      <pre id="jsonPreview" style="margin:0;background:#f7f9fc;border:1px solid var(--line);border-radius:10px;padding:12px;overflow:auto;font-size:12.5px;line-height:1.6"></pre>
+      <div class="btnrow" style="margin-top:12px">
+        <button class="btn ghost" id="copyJson" type="button">复制 JSON</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <h3>这个页面能做什么、不能做什么</h3>
+    <b>能：</b>在本地检查 zip 结构、统计文件数、找出入口页、预览渲染效果、生成建议的 slug 与 manifest 记录。<br>
+    <b>不能：</b>本站是 GitHub Pages 静态托管，没有后端，所以浏览器<b>无法直接把文件写进仓库</b>。
+    真正「落地」的动作必须由 GitHub Actions（方式一）或本机脚本（方式二）完成——这就是为什么下面要给你两条路。
+  </div>
+</div>
+
+<div class="footer">
+  <a href="../">返回个人主页</a> · <a href="../apps/">网页应用</a>
+</div>
+
+<script src="../assets/jszip.min.js"></script>
+<script src="../assets/site.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var OWNER = 'Doris-Lee97052388150';
+  var REPO = 'Doris-Lee97052388150.github.io';
+
+  var elDrop = document.getElementById('drop');
+  var elFile = document.getElementById('file');
+  var elStatus = document.getElementById('status');
+  var elResult = document.getElementById('resultCard');
+  var elPreviewCard = document.getElementById('previewCard');
+  var elImportCard = document.getElementById('importCard');
+  var elPkg = document.getElementById('pkgName');
+  var elChecks = document.getElementById('checks');
+  var elFiles = document.getElementById('files');
+  var elFrameWrap = document.getElementById('frameWrap');
+  var elFrame = document.getElementById('frame');
+  var elJson = document.getElementById('jsonPreview');
+  var elCmd = document.getElementById('cmdBox');
+  var elOpenTab = document.getElementById('openTab');
+  var elPreviewNote = document.getElementById('previewNote');
+
+  var store = null;
+  var entry = 'index.html';
+  var slug = '';
+  var zipName = '';
+  var token = 'p' + Date.now().toString(36);
+  var swReg = null;
+
+  function esc(s) { return window.DL ? window.DL.esc(s) : String(s); }
+  function fmtSize(b) { return window.DL ? window.DL.fmtSize(b) : (b + ' B'); }
+
+  function setStatus(text) { elStatus.textContent = text; }
+
+  function slugify(s) {
+    var out = '';
+    var bad = '/\\:*?"<>|';
+    for (var i = 0; i < s.length; i++) {
+      var ch = s.charAt(i);
+      var isBad = bad.indexOf(ch) !== -1 || ch.trim() === '' || ch.charCodeAt(0) < 32;
+      out += isBad ? '-' : ch;
+    }
+    out = out.replace(/^-+/, '').replace(/-+$/, '');
+    while (out.indexOf('--') !== -1) out = out.split('--').join('-');
+    if (out.length > 60) out = out.slice(0, 60).replace(/-+$/, '');
+    return out;
+  }
+
+  function registerSW() {
+    if (!('serviceWorker' in navigator)) return Promise.resolve(null);
+    return navigator.serviceWorker.register('sw.js').then(function (reg) {
+      return navigator.serviceWorker.ready.then(function () { swReg = reg; return reg; });
+    }).catch(function () { return null; });
+  }
+
+  function sendFiles() {
+    return new Promise(function (resolve) {
+      var target = (swReg && swReg.active) || navigator.serviceWorker.controller;
+      if (!target) { resolve(false); return; }
+      var ch = new MessageChannel();
+      var settled = false;
+      ch.port1.onmessage = function () { if (!settled) { settled = true; resolve(true); } };
+      try {
+        target.postMessage({ type: 'load', token: token, files: store }, [ch.port2]);
+      } catch (err) {
+        resolve(false);
+        return;
+      }
+      setTimeout(function () { if (!settled) { settled = true; resolve(true); } }, 4000);
+    });
+  }
+
+  function handleZip(file) {
+    if (!window.JSZip) {
+      setStatus('JSZip 没加载成功，无法在浏览器里解压。请直接上传 zip 到 _incoming/。');
+      return;
+    }
+    zipName = file.name;
+    slug = slugify(file.name.replace(/\.zip$/i, '')) || 'app-' + Date.now().toString(36);
+    setStatus('正在解压 ' + file.name + ' …');
+
+    JSZip.loadAsync(file).then(function (zip) {
+      var names = [];
+      zip.forEach(function (relPath, entryObj) {
+        if (entryObj.dir) return;
+        var n = relPath.split('\\').join('/');
+        if (n.indexOf('__MACOSX') !== -1) return;
+        var base = n.split('/').pop();
+        if (base === '.DS_Store' || base === 'Thumbs.db' || base === 'desktop.ini') return;
+        names.push(n);
+      });
+      names.sort();
+
+      if (!names.length) throw new Error('zip 里没有文件');
+
+      // 与命令行工具一致：如果所有文件都在同一个顶层文件夹下，自动去壳
+      var prefix = '';
+      var firstSeg = names[0].split('/')[0];
+      var allSame = names.every(function (n) { return n.split('/')[0] === firstSeg; });
+      var hasNested = names.some(function (n) { return n.indexOf('/') !== -1; });
+      if (allSame && hasNested) prefix = firstSeg + '/';
+
+      var rels = names.map(function (n) { return n.slice(prefix.length); });
+
+      store = {};
+      var jobs = names.map(function (n, i) {
+        return zip.file(n).async('uint8array').then(function (u8) { store[rels[i]] = u8; });
+      });
+
+      return Promise.all(jobs).then(function () {
+        if (Object.prototype.hasOwnProperty.call(store, 'index.html')) entry = 'index.html';
+        else if (Object.prototype.hasOwnProperty.call(store, 'index.htm')) entry = 'index.htm';
+        else {
+          var htmls = rels.filter(function (n) { return /\.html?$/i.test(n); });
+          htmls.sort(function (a, b) {
+            var da = a.split('/').length, db = b.split('/').length;
+            if (da !== db) return da - db;
+            return a.localeCompare(b);
+          });
+          if (!htmls.length) throw new Error('zip 里没有 .html 文件，无法作为网页包');
+          entry = htmls[0];
+        }
+        return showResult(rels, prefix);
+      });
+    }).catch(function (err) {
+      setStatus('读取失败：' + err.message);
+    });
+  }
+
+  function showResult(rels, prefix) {
+    var total = 0;
+    var folders = {};
+    for (var i = 0; i < rels.length; i++) {
+      var u8 = store[rels[i]];
+      total += u8 ? u8.length : 0;
+      var seg = rels[i].split('/');
+      if (seg.length > 1) folders[seg[0]] = (folders[seg[0]] || 0) + 1;
+    }
+
+    elPkg.textContent = zipName;
+    var checks = '';
+    checks += '<div class="kvline"><span>文件数量</span><span>' + rels.length + '</span></div>';
+    checks += '<div class="kvline"><span>解压后大小</span><span>' + esc(fmtSize(total)) + '</span></div>';
+    checks += '<div class="kvline"><span>入口页面</span><span>' + esc(entry) + '</span></div>';
+    checks += '<div class="kvline"><span>建议 slug</span><span>' + esc(slug) + '</span></div>';
+    if (prefix) {
+      checks += '<div class="kvline"><span>顶层文件夹</span><span>已自动去掉 ' + esc(prefix) + '</span></div>';
+    }
+    if (total > 60 * 1024 * 1024) {
+      checks += '<div class="kvline"><span>提示</span><span>包比较大，页面加载可能偏慢</span></div>';
+    }
+    var unsafe = rels.filter(function (n) { return n.split('/').indexOf('..') !== -1; });
+    if (unsafe.length) {
+      checks += '<div class="kvline"><span>警告</span><span>发现 ' + unsafe.length + ' 个含 .. 的路径，导入时会被跳过</span></div>';
+    }
+    elChecks.innerHTML = checks;
+
+    var listHtml = '';
+    for (var j = 0; j < Math.min(rels.length, 80); j++) {
+      listHtml += '<div>' + esc(rels[j]) + '</div>';
+    }
+    if (rels.length > 80) listHtml += '<div>… 还有 ' + (rels.length - 80) + ' 个文件</div>';
+    elFiles.innerHTML = listHtml;
+
+    elResult.hidden = false;
+    elPreviewCard.hidden = false;
+    elImportCard.hidden = false;
+
+    var uploadUrl = 'https://github.com/' + OWNER + '/' + REPO + '/upload/main/_incoming';
+    document.getElementById('uploadLink').setAttribute('href', uploadUrl);
+    document.getElementById('slugInline').textContent = slug;
+    elCmd.textContent = 'node tools/import-zip.mjs "' + zipName + '" --title "' + slug + '"';
+
+    var rec = {
+      slug: slug,
+      title: slug,
+      description: '',
+      entry: entry,
+      source: zipName,
+      importedAt: new Date().toISOString(),
+      fileCount: rels.length,
+      size: total
+    };
+    elJson.textContent = JSON.stringify(rec, null, 2);
+
+    var previewUrl = 'preview/' + token + '/' + entry;
+    elOpenTab.setAttribute('href', previewUrl);
+
+    registerSW().then(function (reg) {
+      if (!reg) {
+        elPreviewNote.textContent = '当前浏览器不支持 Service Worker，无法内嵌预览；可以用「新标签页打开」试试，或直接上传。';
+      }
+      setStatus('检查完成：' + rels.length + ' 个文件，入口 ' + entry);
+    });
+  }
+
+  elPreviewBtnEvent();
+
+  function elPreviewBtnEvent() {
+    document.getElementById('previewBtn').addEventListener('click', function () {
+      if (!store) return;
+      var previewUrl = 'preview/' + token + '/' + entry;
+      elPreviewNote.textContent = '正在把包交给预览服务…';
+      sendFiles().then(function (ok) {
+        if (!ok) {
+          elPreviewNote.textContent = '预览服务没准备好（可能是浏览器不支持 Service Worker）。用「新标签页打开」或直接上传即可。';
+          return;
+        }
+        elFrame.src = previewUrl;
+        elFrameWrap.hidden = false;
+        elPreviewNote.textContent = '下面是这个包首页的真实渲染效果（相对路径都可以正常加载）。';
+      });
+    });
+  }
+
+  function copyText(id, text) {
+    var btn = document.getElementById(id);
+    var old = btn.textContent;
+    var done = function (ok) {
+      btn.textContent = ok ? '已复制' : '复制失败';
+      setTimeout(function () { btn.textContent = old; }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+    } else {
+      done(false);
+    }
+  }
+
+  document.getElementById('copyJson').addEventListener('click', function () {
+    copyText('copyJson', elJson.textContent);
+  });
+  document.getElementById('copyCmd').addEventListener('click', function () {
+    copyText('copyCmd', elCmd.textContent);
+  });
+
+  elDrop.addEventListener('click', function () { elFile.click(); });
+  elFile.addEventListener('change', function () {
+    if (elFile.files && elFile.files[0]) handleZip(elFile.files[0]);
+  });
+  ['dragenter', 'dragover'].forEach(function (t) {
+    elDrop.addEventListener(t, function (e) { e.preventDefault(); elDrop.classList.add('over'); });
+  });
+  ['dragleave', 'drop'].forEach(function (t) {
+    elDrop.addEventListener(t, function (e) { e.preventDefault(); elDrop.classList.remove('over'); });
+  });
+  elDrop.addEventListener('drop', function (e) {
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) handleZip(f);
+  });
+
+  registerSW();
+})();
+</script>
+</body>
+</html>
